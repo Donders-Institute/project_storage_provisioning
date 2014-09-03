@@ -67,18 +67,19 @@ if __name__ == "__main__":
     ##  
     ## if there is a need to change (downgrade) your permission, use
     ## the super user via sudo to run this program.
+    me = os.environ['LOGNAME']
     try:
-        _l_admin.remove( os.environ['LOGNAME'] )
+        _l_admin.remove( me )
     except ValueError, e:
         pass
 
     try:
-        _l_user.remove( os.environ['LOGNAME'] )
+        _l_user.remove( me )
     except ValueError, e:
         pass
 
     try:
-        _l_contrib.remove( os.environ['LOGNAME'] )
+        _l_contrib.remove( me )
     except ValueError, e:
         pass
 
