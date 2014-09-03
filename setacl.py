@@ -27,7 +27,7 @@ if __name__ == "__main__":
                       action  = 'store',
                       dest    = 'verbose',
                       type    = int,
-                      choices = [0, 1, 2, 3],  ## choices work only with str
+                      choices = [0, 1, 2, 3],
                       default = 0,
                       help    = 'set one of the following verbosity levels. 0|default:WARNING, 1:ERROR, 2:INFO, 3:DEBUG')
 
