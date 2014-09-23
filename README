@@ -1,1 +1,25 @@
-Wed Sep  3 14:15:42 CEST 2014: project project_acl initialized by honlee (Hurng-Chun Lee)
+## Usage
+
+The following command creates a new project directory xxxxxxx.yy under `/project`, and adds yourself as a administrator of that directory. 
+
+```
+$ source /mnt/software/setup.sh
+$ module load cluster
+$ module load python/2.7.6
+$ sudo setacl.py -n -a $USER xxxxxxx.yy 
+```
+
+The following adds `honlee` as user and `edwger` as contributor to project `xxxxxxx.yy`. 
+```
+$ setacl.py -u honlee -c edwger xxxxxxx.yy
+```
+
+The following commands list user roles of the project `xxxxxxx.yy`. 
+```
+$ getacl.py xxxxxxx.yy
+```
+
+The following commands list user roles of all projects under the `/project` directory. 
+```
+$ sudo getacl.py
+```

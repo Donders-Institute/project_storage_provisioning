@@ -1,4 +1,4 @@
-#!/opt/python-2.7.6/bin/python
+#!/bin/env python
 import sys
 import os 
 import logging
