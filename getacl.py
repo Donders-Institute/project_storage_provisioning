@@ -95,12 +95,12 @@ if __name__ == "__main__":
         aces = getACE(p, recursive=False, lvl=args.verbose)
 
         if aces[p]:
-            for type,flag,principle,permission in aces[p]:
+            for tp,flag,principle,permission in aces[p]:
                
                 ## exclude the default principles 
                 u = principle.split('@')[0]
  
-                if u not in ['GROUP','OWNER','EVERYONE'] and type in ['A']:
+                if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
                     r = getRoleFromACE(permission, lvl=args.verbose)
                     roles[id][r].append(u)
                     logger.debug('user %s: permission %s, role %s' % (u, permission,r))
