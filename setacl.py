@@ -14,13 +14,13 @@ logging.basicConfig(format='[%(levelname)s:%(name)s] %(message)s')
 ## execute the main program
 if __name__ == "__main__":
 
-    parg = ArgumentParser(description='sets/adds ACL of a path iteratively', version="0.1")
+    parg = ArgumentParser(description='sets/adds access rights to project storage', version="0.1")
 
     ## positional arguments
-    parg.add_argument('path',
-                      metavar = 'path',
+    parg.add_argument('pid',
+                      metavar = 'pid',
                       nargs   = '+',
-                      help    = 'the path')
+                      help    = 'the project id')
 
     ## optional arguments
     parg.add_argument('-l','--loglevel',
@@ -48,6 +48,18 @@ if __name__ == "__main__":
                       dest    = 'admins',
                       default = '',
                       help    = 'set list of system uids separated by "," for the admin role')
+
+    parg.add_argument('-d','--basedir',
+                      action  = 'store',
+                      dest    = 'basedir',
+                      default = '/project',
+                      help    = 'set the basedir in which the project storages are located')
+
+    parg.add_argument('-n','--new',
+                      action  = 'store_true',
+                      dest    = 'do_create',
+                      default = False,
+                      help    = 'create new project storage if the storage is not existing')
 
     args = parg.parse_args()
 
@@ -83,7 +95,14 @@ if __name__ == "__main__":
     except ValueError, e:
         pass
 
-    for p in args.path:
+    for id in args.pid:
+
+        p = os.path.join(args.basedir, id)
+
+        if not os.path.exists(p) and args.do_create:
+            os.mkdir(p)
+            ## TODO: set project folder to proper ownership, e.g. project:project_g
+
         if os.path.exists(p):
             logger.info('setting file or directory: %s' % p)
             setACE(p, admins=_l_admin, users=_l_user, contributors=_l_contrib, lvl=args.verbose)

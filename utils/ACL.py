@@ -3,22 +3,26 @@ import logging
 from utils.Shell  import *
 from utils.Common import getMyLogger
 
+ROLE_ADMIN       = 'admin'
+ROLE_CONTRIBUTOR = 'contributor'
+ROLE_USER        = 'user'
+
+ROLE_ACL         = { ROLE_ADMIN       : 'RXWdDoy',
+                     ROLE_CONTRIBUTOR : 'rwaDdxnNtTcy',
+                     ROLE_USER        : 'RXy' }
+   
 def get_permission(role):
     ''' gets permission bits for DENY and ALLOW, given the role
     '''
     all_permission = 'rwaDdxnNtTcCoy'
 
-    _role_acl_ = { 'admin'      : 'RXWdDy',
-                   'contributor': 'rwdDtTnNcy',
-                   'user'       : 'RXy' }
-   
     _alias_ = { 'R': 'rntcy',
                 'W': 'watTNcCy',
                 'X': 'xtcy' }
  
     acl = {} 
     try:
-        _acl_a = _role_acl_[role]
+        _acl_a = ROLE_ACL[role]
 
         for k,v in _alias_.iteritems():
             _acl_a = _acl_a.replace(k, v)
@@ -34,6 +38,20 @@ def get_permission(role):
 
     return acl
 
+def getRoleFromACE(ace, lvl=0):
+    ''' converts ACE permission into the defined roles: admin, user, contributor
+    '''
+
+    logger = getMyLogger(lvl=lvl)
+
+    diff = {}
+    for r in [ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_USER]:
+        diff[r] = list( set(list(ace)) ^ set(list( get_permission(r)['A']  )) )
+        logger.debug('diff to role %s: %s' % (r, repr(diff[r])))
+
+    ## find the closest match, i.e. shortest string on the value of the diff dict
+    return sorted(diff.items(), key=lambda x:len(x[1]))[0][0]
+
 def delACE(path, users, roles=None, lvl=0):
     ''' deletes all ACE entry related to the given list of users.
         If roles are gien, only the ACEs corresponding to the roles are deleted.
@@ -45,7 +63,7 @@ def delACE(path, users, roles=None, lvl=0):
         return True
 
     if not roles:
-        roles = ['admin','contributor','user']
+        roles = [ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_USER]
 
     _acls_perm = {}
     for r in roles:
