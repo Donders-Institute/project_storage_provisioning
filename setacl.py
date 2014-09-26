@@ -69,9 +69,9 @@ if __name__ == "__main__":
     args.users         = args.users.strip()
     args.contributors  = args.contributors.strip()
 
-    _l_admin   = csvArgsToList(args.admins) 
-    _l_user    = csvArgsToList(args.users) 
-    _l_contrib = csvArgsToList(args.contributors) 
+    _l_admin    = csvArgsToList(args.admins) 
+    _l_user     = csvArgsToList(args.users) 
+    _l_contrib  = csvArgsToList(args.contributors) 
 
     ## there is no reason to set yourself for admin, user, contributor
     ## since the you should have been the admin to run this program
