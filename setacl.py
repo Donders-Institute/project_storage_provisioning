@@ -4,6 +4,8 @@ import os
 import logging
 from argparse import ArgumentParser
 
+## adding PYTHONPATH for access to utility modules and 3rd-party libraries
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, setACE, delACE
 from utils.Common import getMyLogger, csvArgsToList

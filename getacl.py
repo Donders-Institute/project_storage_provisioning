@@ -4,44 +4,15 @@ import os
 import logging
 from argparse import ArgumentParser
 
+## adding PYTHONPATH for access to utility modules and 3rd-party libraries
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, setACE, delACE, getRoleFromACE, ROLE_ACL
 from utils.Common import getMyLogger, csvArgsToList
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
-from prettytable import PrettyTable
+from utils.Report import printRoleTable, updateProjectDatabase
 
 ## set default logger format
 logging.basicConfig(format='[%(levelname)s:%(name)s] %(message)s')
-
-def __update_db__(roles, lvl=0):
-    ''' update project roles in the project database 
-    '''
-    logger = getMyLogger(lvl=lvl)
-    logger.warning('this function not implemented yet.')
-
-    ## TODO: make connection to MySQL, prepare and execute SQL statement
-
-def __print_role_table__(roles):
-    ''' display project roles in prettytable
-    '''
-    r_keys = ROLE_ACL.keys()
-
-    t = PrettyTable()
-    t.field_names = ['project'] + r_keys
-
-    for p,r in roles.iteritems():
-        data = []
-        data.append(p)
-        for k in r_keys:
-            if r[k]:
-                data.append(','.join(r[k]))
-            else:
-                data.append('N/A')
-        t.add_row(data)
-
-    t.sortby = 'project'
-    print t
 
 ## execute the main program
 if __name__ == "__main__":
@@ -106,7 +77,7 @@ if __name__ == "__main__":
                     logger.debug('user %s: permission %s, role %s' % (u, permission,r))
 
     ## printing or updating project DB database
-    __print_role_table__(roles)
+    printRoleTable(roles)
 
     if args.updatedb:
-        __update_db__(roles)
+        updateProjectDatabase(roles, lvl=args.verbose)

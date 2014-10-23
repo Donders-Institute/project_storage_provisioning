@@ -12,17 +12,6 @@ import ConfigParser
 import StringIO
 import gzip
 
-#try:
-#    ## set up for MySQLdb (assuming that this script will be executed with guse account)
-#    os.environ['PYTHON_EGG_CACHE'] = os.path.join( os.environ['HOME'], '.python-eggs')
-#    import MySQLdb as mdb
-#except Exception,e:
-#    import mysql.connector as mdb
-#    from mysql.connector import errorcode
-#except:
-#    pass
-
-
 # a class make the dictionary hashable 
 class HashableDict(dict):
     def __hash__(self):
