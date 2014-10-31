@@ -1,7 +1,6 @@
 #!/bin/env python
 import sys
 import os 
-import logging
 from argparse import ArgumentParser
 
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
@@ -9,9 +8,6 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, setACE, delACE
 from utils.Common import getMyLogger, csvArgsToList
-
-## set default logger format
-logging.basicConfig(format='[%(levelname)s:%(name)s] %(message)s')
 
 ## execute the main program
 if __name__ == "__main__":

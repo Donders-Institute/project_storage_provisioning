@@ -16,7 +16,7 @@ except Exception, e:
     import mysql.connector as mdb
     from mysql.connector import errorcode
 
-def updateProjectDatabase(roles, lvl=0):
+def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
     ''' update project roles in the project database 
     '''
     logger = getMyLogger(lvl=lvl)
@@ -25,7 +25,69 @@ def updateProjectDatabase(roles, lvl=0):
         logger.error('No MySQL library available.  Function disabled.')
     else:
         ## TODO: make connection to MySQL, prepare and execute SQL statement
-        pass
+        cnx = __getMySQLConnector__(db_host, db_uid, db_pass, db_name, lvl=lvl)
+        if not cnx:
+            logger.error('Project DB connection failed')
+            return
+        else:
+            crs = None
+            try:
+                ## get the db cursor
+                crs = cnx.cursor()
+            
+                ## delete project users first followed by inserting new users and roles
+                qry1  = 'DELETE FROM acls WHERE project=%s'
+                data1 = []
+                qry2  = 'INSERT INTO acls (user, project, projectAccessAs) VALUES (%s, %s, %s) '
+                data2 = []
+
+                for p,r in roles.iteritems():
+                    for k,v in r.iteritems():
+                        for u in v:
+                            data1.append( (p) )
+                            data2.append( (p, k, u) )
+
+                ## remove duplication
+                data1 = list(set(data1))
+
+                for d in data1:
+                    logger.debug(qry1 % d)
+
+                for d in data2:
+                    logger.debug(qry2 % d)
+
+                ## execute queries via the db cursor, transaction *shoud be* enabled by default
+                if data1:
+                    crs.executemany(qry1, data1)
+
+                if data2:
+                    crs.executemany(qry2, data2)
+
+                ## commit the transaction if everything is fine
+                cnx.commit()
+
+            except Exception, e:
+                logger.exception('Project DB update failed')
+                ## something wrong, rollback the queries
+                try:
+                    cnx.rollback()
+                except Exception, e:
+                    logger.exception('Project DB rollback failed')
+            else:
+                ## everything is fine
+                logger.info('Project DB update succeeded')
+            finally:
+                ## close db cursor
+                try:
+                    crs.close()
+                except Exception, e:
+                    pass
+
+                ## close db connection
+                try:
+                    cnx.close()
+                except Exception, e:
+                    pass
 
 def printRoleTable(roles):
     ''' display project roles in prettytable
@@ -49,7 +111,7 @@ def printRoleTable(roles):
     print t
 
 ## internal functions
-def __getMySQLConnector__(uid,passwd,db,lvl=0):
+def __getMySQLConnector__(host,uid,passwd,db,lvl=0):
     ''' establishes MySQL connector
     '''
 
@@ -62,7 +124,7 @@ def __getMySQLConnector__(uid,passwd,db,lvl=0):
         config = {'user'   : uid,
                   'passwd' : passwd,
                   'db'     : db,
-                  'host'   : 'localhost'}
+                  'host'   : host }
         try:
             cnx = mdb.connect(**config)
         except mdb.Error, e:
@@ -74,7 +136,7 @@ def __getMySQLConnector__(uid,passwd,db,lvl=0):
         config = {'user'             : uid,
                   'password'         : passwd,
                   'database'         : db,
-                  'host'             : 'localhost',
+                  'host'             : host,
                   'raise_on_warnings': True }
         try:
             cnx = mdb.connect(**config)

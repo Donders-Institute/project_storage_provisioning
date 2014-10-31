@@ -12,6 +12,21 @@ import ConfigParser
 import StringIO
 import gzip
 
+from colorlog import ColoredFormatter
+
+lc_formatter = ColoredFormatter(
+        "%(log_color)s[%(levelname)-8s:%(name)s] %(message)s%(reset)s",
+        datefmt=None,
+        reset=True,
+        log_colors={
+                'DEBUG':    'cyan',
+                'INFO':     'green',
+                'WARNING':  'yellow',
+                'ERROR':    'red',
+                'CRITICAL': 'red',
+        }
+)
+
 # a class make the dictionary hashable 
 class HashableDict(dict):
     def __hash__(self):
@@ -41,6 +56,12 @@ def getMyLogger(name=None, lvl=0):
 
     _logger = logging.getLogger(name)
     _logger.setLevel(_lvl[lvl])
+
+    ## add logger handlers
+    _s_hdl = logging.StreamHandler()
+    _s_hdl.setFormatter(lc_formatter)
+
+    _logger.addHandler(_s_hdl)
 
     return _logger
 
