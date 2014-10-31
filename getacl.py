@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
         if aces[p]:
             for tp,flag,principle,permission in aces[p]:
-               
+
                 ## exclude the default principles 
                 u = principle.split('@')[0]
  

@@ -27,6 +27,8 @@ lc_formatter = ColoredFormatter(
         }
 )
 
+loggers = {}
+
 # a class make the dictionary hashable 
 class HashableDict(dict):
     def __hash__(self):
@@ -49,21 +51,28 @@ def csvArgsToList(csvArg):
 
 def getMyLogger(name=None, lvl=0):
 
+    global loggers
+
     _lvl = [ logging.WARNING, logging.ERROR, logging.INFO, logging.DEBUG ]
 
     if name is None:
         name = inspect.stack()[1][3]
 
-    _logger = logging.getLogger(name)
-    _logger.setLevel(_lvl[lvl])
+    if not loggers.get(name):
 
-    ## add logger handlers
-    _s_hdl = logging.StreamHandler()
-    _s_hdl.setFormatter(lc_formatter)
+        ## create new logger object
+        _logger = logging.getLogger(name)
+        _logger.setLevel(_lvl[lvl])
 
-    _logger.addHandler(_s_hdl)
+        ## add logger handlers
+        _s_hdl = logging.StreamHandler()
+        _s_hdl.setFormatter(lc_formatter)
+ 
+        _logger.addHandler(_s_hdl)
 
-    return _logger
+        loggers[name] = _logger
+
+    return loggers.get(name)
 
 def getConfig(config_file='config.ini'):
     '''
