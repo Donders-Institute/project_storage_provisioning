@@ -79,7 +79,7 @@ if __name__ == "__main__":
     if args.updatedb:
 
         db_host   = 'dccn-l027.dccn.nl'
-        db_uid    = 'user'
+        db_uid    = 'acl'
         db_name   = 'dccndb'
 
         ## read database connection password from stdin

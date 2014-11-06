@@ -31,6 +31,18 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
             return
         else:
             crs = None
+
+            try:
+                ## in this case, we are using MySQLdb 
+                ##  - disable autocommit that is by default enabled in MySQLdb package
+                cnx.autocommit(False)
+            except Exception:
+                ## in this case, we are using mysql.connector
+                ##  - the mysql.connector doesn't have the autocommit function;
+                ##    but the transaction is enabled by default, and autocommit set to False.
+                ##  - we set autocommit to False anyway.
+                cnx.autocommit = False
+
             try:
                 ## get the db cursor
                 crs = cnx.cursor()
@@ -38,14 +50,14 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
                 ## delete project users first followed by inserting new users and roles
                 qry1  = 'DELETE FROM acls WHERE project=%s'
                 data1 = []
-                qry2  = 'INSERT INTO acls (user, project, projectAccessAs) VALUES (%s, %s, %s) '
+                qry2  = 'INSERT INTO acls (project, user, projectAccessAs) VALUES (%s, %s, %s) '
                 data2 = []
 
                 for p,r in roles.iteritems():
                     for k,v in r.iteritems():
                         for u in v:
                             data1.append( (p) )
-                            data2.append( (p, k, u) )
+                            data2.append( (p, u, k) )
 
                 ## remove duplication
                 data1 = list(set(data1))
