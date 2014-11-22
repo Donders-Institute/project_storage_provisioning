@@ -101,7 +101,7 @@ def getACE(path, user=None, recursive=False, lvl=0):
         logger.debug('get ACL of %s ...' % fpath)
 
         cmd = 'nfs4_getfacl %s' % fpath 
-        rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=300)
+        rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=None)
         if rc != 0:
             logger.error('%s failed' % cmd)
             return None
@@ -192,7 +192,7 @@ def __nfs4_setfacl__(fpath, aces, options=None):
     cmd += '"%s" %s' % ( ', '.join(aces), fpath )
 
     s = Shell()
-    rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=300)
+    rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=None)
     if rc != 0:
         logger.error('%s failed' % cmd)
         return False 
