@@ -100,6 +100,10 @@ def getACE(path, user=None, recursive=False, lvl=0):
 
         logger.debug('get ACL of %s ...' % fpath)
 
+        ## workaround for NetApp for the path is actually the root of the volume
+        if fpath[-1] is not '/':
+            fpath += '/'
+
         cmd = 'nfs4_getfacl %s' % fpath 
         rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=None)
         if rc != 0:
@@ -188,6 +192,10 @@ def __nfs4_setfacl__(fpath, aces, options=None):
         cmd = 'nfs4_setfacl %s ' % ' '.join(options)
     else:
         cmd = 'nfs4_setfacl '
+
+    ## workaround for NetApp for the path is actually the root of the volume
+    if fpath[-1] is not '/':
+        fpath += '/'
 
     cmd += '"%s" %s' % ( ', '.join(aces), fpath )
 
