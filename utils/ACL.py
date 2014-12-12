@@ -137,8 +137,7 @@ def setACE(path, users=[], contributors=[], admins=[], lvl=0):
 
     logger = getMyLogger(lvl=lvl)
 
-    ## firstly check if same user id appears in three input lists.
-    ## if so, an error is thrown.
+    ## stop role setting if the same user id appears in multiple user lists
     common = list( set(users) & set(contributors) & set(admins) )
 
     if common:
@@ -146,41 +145,51 @@ def setACE(path, users=[], contributors=[], admins=[], lvl=0):
             logger.error('user %s presents in multiple roles.' % u)
         return False
 
-    ## retrieve current ACEs of the top directory to check which users 
-    ## are presented in the current ACEs
-    _ulist_a = users + contributors + admins
+    ulist = {ROLE_ADMIN      : admins,
+             ROLE_CONTRIBUTOR: contributors,
+             ROLE_USER       : users} 
+
+    ## get the existing ACL
+    o_aces = getACE(path, recursive=False, lvl=lvl)[path]
+
+    ## check user roles in existing ACL to avoid redundant operations 
+    for tp,flag,principle,permission in o_aces:
+
+        u = principle.split('@')[0]
+
+        if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
+            r = getRoleFromACE(permission, lvl=lvl)
+            if u in ulist[r]:
+                logger.warning("skip redundant role setting: %s -> %s" % (u,r))
+                ulist[r].remove(u)
 
     ## if the entire user list is empty, just return true
+    _ulist_a = users + contributors + admins
     if not _ulist_a:
+        logger.warning("I have nothing to do!")
         return True
-
-    _ulist_e = []
-    aces = getACE(path, recursive=False, lvl=lvl)[path]
-    for a in aces:
+            
+    ## compose new ACL based on the existing ACL 
+    n_aces = []
+    for a in o_aces:
         u = a[2].split('@')[0]
-        if u in _ulist_a:
-            _ulist_e.append(u)
+        if u not in _ulist_a:
+            n_aces.append(':'.join(a))
 
-    _ulist_e = list(set(_ulist_e))
-
-    if not delACE(path, _ulist_e, lvl=lvl):
-        logger.error('Unable to remove existing ACEs of users: %s' % ', '.join(_ulist_e) )
-        return False
-
-    ulist = {'user':users, 'contributor':contributors, 'admin':admins}
-    aces  = []
-    opts  = ['-R', '-a']
+    ## prepending ACEs related to the given user list
+    opts  = ['-R', '-s']
     for k,v in ulist.iteritems():
         logger.info('Setting %s permission ...' % k)
         _perm = get_permission(k)
         for u in v:
-            aces.append('D:fd:%s@dccn.nl:%s' % (u, _perm['D']))
-            aces.append('A:fd:%s@dccn.nl:%s' % (u, _perm['A']))
+            n_aces.insert(0, 'A:fd:%s@dccn.nl:%s' % (u, _perm['A']))
+            n_aces.insert(0, 'D:fd:%s@dccn.nl:%s' % (u, _perm['D']))
 
-    for a in aces:
-        logger.debug('add ACE: %s' % a)
+    logger.debug('***** new ACL *****')
+    for a in n_aces:
+        logger.debug(a)
 
-    return __nfs4_setfacl__(path, aces, opts)
+    return __nfs4_setfacl__(path, n_aces, opts)
 
 def __nfs4_setfacl__(fpath, aces, options=None):
     ''' wrapper for calling nfs4_setfacl command.
