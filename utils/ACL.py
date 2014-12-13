@@ -52,43 +52,53 @@ def getRoleFromACE(ace, lvl=0):
     ## find the closest match, i.e. shortest string on the value of the diff dict
     return sorted(diff.items(), key=lambda x:len(x[1]))[0][0]
 
-def delACE(path, users, roles=None, lvl=0):
-    ''' deletes all ACE entry related to the given list of users.
-        If roles are gien, only the ACEs corresponding to the roles are deleted.
+def delACE(path, users, force=False, lvl=0):
+    ''' deletes all ACEs related to the given list of users.
+         - force: update the ACL anyway even the given user is not in ACL. 
     '''
 
     logger = getMyLogger(lvl=lvl)
 
+    ## get the existing ACL
+    o_aces = getACE(path, recursive=False, lvl=lvl)[path]
+
+    if not force:
+        ## check users in existing ACL to avoid redundant operations
+        _u_exist = []
+        for tp,flag,principle,permission in o_aces:
+            u = principle.split('@')[0]
+            if u not in _u_exist + ['GROUP','OWNER','EVERYONE']:
+                _u_exist.append(u)
+
+        ## resolve the users requiring actual removal of ACEs
+        _u_remove = list( set(users) & set(_u_exist) )
+        for u in users:
+            if u not in _u_remove:
+                logger.warning('user not presented in ACL: %s' % u)
+
+        users = _u_remove
+
+    ## simply return with True if no user for ACE removal
     if not users:
+        logger.warning("I have nothing to do!")
         return True
+            
+    ## compose new ACL regarding the removal
+    n_aces = []
+    for a in o_aces:
+        u = a[2].split('@')[0]
+        if u not in users:
+            n_aces.append(':'.join(a))
+        else:
+            logger.info('deleting ACEs of user: %s' % u)
 
-    if not roles:
-        roles = [ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_USER]
+    logger.debug('***** new ACL *****')
+    for a in n_aces:
+        logger.debug(a)
 
-    _acls_perm = {}
-    for r in roles:
-        _acls_perm[r] = get_permission(r)
+    _opts = ['-R','-s']
 
-    _acl  = []
-    _opts = ['-R','-x']
-    for u in users:
-        for r,p in _acls_perm.iteritems():
-
-            #if u == os.environ['LOGNAME'] and r == 'admin':
-            #    logger.warn('skip removing %s from admin role.' % u)
-            #    continue
-
-            _acl.append('D:fd:%s@dccn.nl:%s' % (u, p['D'])) 
-            _acl.append('A:fd:%s@dccn.nl:%s' % (u, p['A']))
-
-            ## add possible variations when permissions are propogate to files
-            _acl.append('D::%s@dccn.nl:%s' % (u, p['D'].replace('D',''))) 
-            _acl.append('A::%s@dccn.nl:%s' % (u, p['A'].replace('D','')))
-
-    for a in _acl:
-        logger.debug('delete ACE: %s' % a) 
-
-    return __nfs4_setfacl__(path, _acl, _opts)
+    return __nfs4_setfacl__(path, n_aces, _opts)
 
 def getACE(path, user=None, recursive=False, lvl=0):
     ''' gets ACEs for given user or for all ACEs if user is not given. 
@@ -178,7 +188,7 @@ def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
     ## prepending ACEs related to the given user list
     opts  = ['-R', '-s']
     for k,v in ulist.iteritems():
-        logger.info('Setting %s permission ...' % k)
+        logger.info('setting %s permission ...' % k)
         _perm = get_permission(k)
         for u in v:
             n_aces.insert(0, 'A:fd:%s@dccn.nl:%s' % (u, _perm['A']))

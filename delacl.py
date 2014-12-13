@@ -34,6 +34,12 @@ if __name__ == "__main__":
                       default = 0,
                       help    = 'set the verbosity level, 0:WARNING, 1:ERROR, 2:INFO, 3:DEBUG (default: %(default)s)')
 
+    parg.add_argument('-f','--force',
+                      action  = 'store_true',
+                      dest    = 'force',
+                      default = False,
+                      help    = 'force deleting user from ACL even there is no ACE related to the user, useful for fixing ACL table')
+
     parg.add_argument('-d','--basedir',
                       action  = 'store',
                       dest    = 'basedir',
@@ -56,7 +62,5 @@ if __name__ == "__main__":
     for id in args.pid:
         p = os.path.join(args.basedir, id)
         if os.path.exists(p):
-            if not delACE(p, _l_user, lvl=args.verbose):
+            if not delACE(p, _l_user, force=args.force, lvl=args.verbose):
                 logger.error('fail to remove %s from project %s.' % (','.join(_l_user), id))
-            else:
-                logger.info('remove %s from project %s.' % (','.join(_l_user), id))
