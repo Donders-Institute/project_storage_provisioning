@@ -46,6 +46,11 @@ if __name__ == "__main__":
                       dest    = 'admins',
                       default = '',
                       help    = 'set list of system uids separated by "," for the admin role')
+    parg.add_argument('-f','--force',
+                      action  = 'store_true',
+                      dest    = 'force',
+                      default = False,
+                      help    = 'force updating the ACL even the user is already in the given role, useful for fixing ACL table')
 
     parg.add_argument('-d','--basedir',
                       action  = 'store',
@@ -57,7 +62,7 @@ if __name__ == "__main__":
                       action  = 'store_true',
                       dest    = 'do_create',
                       default = False,
-                      help    = 'create new project storage if the storage is not existing')
+                      help    = 'create new project directory if it does not exist')
 
     args = parg.parse_args()
 
@@ -103,6 +108,6 @@ if __name__ == "__main__":
 
         if os.path.exists(p):
             logger.info('setting file or directory: %s' % p)
-            setACE(p, admins=_l_admin, users=_l_user, contributors=_l_contrib, lvl=args.verbose)
+            setACE(p, admins=_l_admin, users=_l_user, contributors=_l_contrib, force=args.force, lvl=args.verbose)
         else:
             logger.error('file or directory not found: %s' % p)

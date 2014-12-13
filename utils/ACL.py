@@ -128,11 +128,9 @@ def getACE(path, user=None, recursive=False, lvl=0):
 
     return acl
 
-def setACE(path, users=[], contributors=[], admins=[], lvl=0):
+def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
     ''' adds/sets ACEs for user, contributor and admin roles.
-         - for user id not presented in current ACL, create a new ACE.
-         - for user id already presented in current ACL, update it by
-           removing followed by adding it back with correct right.
+         - force: update the ACL anyway even the given user is already in the role. 
     '''
 
     logger = getMyLogger(lvl=lvl)
@@ -152,16 +150,17 @@ def setACE(path, users=[], contributors=[], admins=[], lvl=0):
     ## get the existing ACL
     o_aces = getACE(path, recursive=False, lvl=lvl)[path]
 
-    ## check user roles in existing ACL to avoid redundant operations 
-    for tp,flag,principle,permission in o_aces:
-
-        u = principle.split('@')[0]
-
-        if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
-            r = getRoleFromACE(permission, lvl=lvl)
-            if u in ulist[r]:
-                logger.warning("skip redundant role setting: %s -> %s" % (u,r))
-                ulist[r].remove(u)
+    if not force:
+        ## check user roles in existing ACL to avoid redundant operations 
+        for tp,flag,principle,permission in o_aces:
+ 
+            u = principle.split('@')[0]
+ 
+            if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
+                r = getRoleFromACE(permission, lvl=lvl)
+                if u in ulist[r]:
+                    logger.warning("skip redundant role setting: %s -> %s" % (u,r))
+                    ulist[r].remove(u)
 
     ## if the entire user list is empty, just return true
     _ulist_a = users + contributors + admins
