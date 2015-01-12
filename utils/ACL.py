@@ -192,7 +192,8 @@ def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
         _perm = get_permission(k)
         for u in v:
             n_aces.insert(0, 'A:fd:%s@dccn.nl:%s' % (u, _perm['A']))
-            n_aces.insert(0, 'D:fd:%s@dccn.nl:%s' % (u, _perm['D']))
+            ## Do not need to set the DENY ACE's
+            #n_aces.insert(0, 'D:fd:%s@dccn.nl:%s' % (u, _perm['D']))
 
     logger.debug('***** new ACL *****')
     for a in n_aces:
