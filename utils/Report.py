@@ -48,9 +48,9 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
                 crs = cnx.cursor()
             
                 ## delete project users first followed by inserting new users and roles
-                qry1  = 'DELETE FROM acls WHERE project=%s'
+                qry1  = 'DELETE FROM acls WHERE project=\'%s\''
                 data1 = []
-                qry2  = 'INSERT INTO acls (project, user, projectAccessAs) VALUES (%s, %s, %s) '
+                qry2  = 'INSERT INTO acls (project, user, projectRole) VALUES (%s, %s, %s)'
                 data2 = []
 
                 for p,r in roles.iteritems():
