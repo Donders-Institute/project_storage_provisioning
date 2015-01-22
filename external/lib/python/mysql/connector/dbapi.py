@@ -1,5 +1,5 @@
 # MySQL Connector/Python - MySQL driver written in Python.
-# Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
 
 # MySQL Connector/Python is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -26,32 +26,23 @@ This module implements some constructors and singletons as required by the
 DB API v2.0 (PEP-249).
 """
 
-# Python Db API v2
-apilevel = '2.0'
-threadsafety = 1
-paramstyle = 'pyformat'
-
 import time
 import datetime
 
-from . import constants
+from mysql.connector import constants
 
-class _DBAPITypeObject(object):
-
+class _DBAPITypeObject:
+    
     def __init__(self, *values):
         self.values = values
-
-    def __eq__(self, other):
+        
+    def __cmp__(self, other):
         if other in self.values:
-            return True
+            return 0
+        if other < self.values:
+            return 1
         else:
-            return False
-
-    def __ne__(self, other):
-        if other in self.values:
-            return False
-        else:
-            return True
+            return -1
 
 Date = datetime.date
 Time = datetime.time
@@ -66,10 +57,10 @@ def TimeFromTicks(ticks):
 def TimestampFromTicks(ticks):
     return Timestamp(*time.localtime(ticks)[:6])
 
-Binary = bytes
+Binary = str
 
-STRING = _DBAPITypeObject(*constants.FieldType.get_string_types())
-BINARY = _DBAPITypeObject(*constants.FieldType.get_binary_types())
-NUMBER = _DBAPITypeObject(*constants.FieldType.get_number_types())
-DATETIME = _DBAPITypeObject(*constants.FieldType.get_timestamp_types())
+STRING = _DBAPITypeObject(constants.FieldType.get_string_types())
+BINARY = _DBAPITypeObject(constants.FieldType.get_binary_types())
+NUMBER = _DBAPITypeObject(constants.FieldType.get_number_types())
+DATETIME = _DBAPITypeObject(constants.FieldType.get_timestamp_types())
 ROWID = _DBAPITypeObject()

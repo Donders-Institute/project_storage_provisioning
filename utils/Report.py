@@ -48,7 +48,7 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
                 crs = cnx.cursor()
             
                 ## delete project users first followed by inserting new users and roles
-                qry1  = 'DELETE FROM acls WHERE project=\'%s\''
+                qry1  = 'DELETE FROM acls WHERE project=%s'
                 data1 = []
                 qry2  = 'INSERT INTO acls (project, user, projectRole) VALUES (%s, %s, %s)'
                 data2 = []
@@ -56,23 +56,21 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
                 for p,r in roles.iteritems():
                     for k,v in r.iteritems():
                         for u in v:
-                            data1.append( (p) )
+                            data1.append( (p,) )
                             data2.append( (p, u, k) )
 
                 ## remove duplication
                 data1 = list(set(data1))
 
-                for d in data1:
-                    logger.debug(qry1 % d)
-
-                for d in data2:
-                    logger.debug(qry2 % d)
-
                 ## execute queries via the db cursor, transaction *shoud be* enabled by default
                 if data1:
+                    for d in data1:
+                        logger.debug(qry1 % d)
                     crs.executemany(qry1, data1)
 
                 if data2:
+                    for d in data2:
+                        logger.debug(qry2 % d)
                     crs.executemany(qry2, data2)
 
                 ## commit the transaction if everything is fine
