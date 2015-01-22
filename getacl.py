@@ -1,7 +1,6 @@
 #!/bin/env python
 import sys
 import os 
-import getpass 
 from argparse import ArgumentParser
 
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
@@ -9,7 +8,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, setACE, delACE, getRoleFromACE, ROLE_ACL
 from utils.Common import getMyLogger, csvArgsToList
-from utils.Report import printRoleTable, updateProjectDatabase
+from utils.Report import printRoleTable
+from utils.IProjectDB import getDBConnectInfo,updateProjectDatabase
 
 ## execute the main program
 if __name__ == "__main__":
@@ -77,18 +77,5 @@ if __name__ == "__main__":
     printRoleTable(roles)
 
     if args.updatedb:
-
-        db_host   = 'dccn-l004.fcdonders.nl'
-        db_uid    = 'acl'
-        db_name   = 'fcdc'
-
-        ## read database connection password from stdin
-        db_pass   = None
-
-        if sys.stdin.isatty(): ## for interactive password typing
-            db_pass = getpass.getpass('Project DB password: ')
-        else: ## for pipeing-in password
-            print 'Project DB password: '
-            db_pass = sys.stdin.readline().rstrip()
-
+        (db_host, db_uid, db_name, db_pass) = getDBConnectInfo()
         updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)

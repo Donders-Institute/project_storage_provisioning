@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import logging
+import pickle
 from utils.Shell  import *
-from utils.Common import getMyLogger
+from utils.Common import getMyLogger, getClientInfo
 
 ROLE_ADMIN       = 'admin'
 ROLE_CONTRIBUTOR = 'contributor'
@@ -207,6 +208,8 @@ def __nfs4_setfacl__(fpath, aces, options=None):
          - aces   : the ACEs in a list of strings
          - options: the command-line options in a list of strings 
     '''
+    logger = getMyLogger()
+
     if options:
         cmd = 'nfs4_setfacl %s ' % ' '.join(options)
     else:
@@ -216,15 +219,32 @@ def __nfs4_setfacl__(fpath, aces, options=None):
     if fpath[-1] is not '/':
         fpath += '/'
 
+    ## check existance of the .setacl_lock file within the fpath
+    lock_fpath = os.path.join( fpath, '.setacl_lock' )
+    if os.path.exists( lock_fpath ):
+        logger.error('cannot setacl as lock file \'%s\' has been acquired by other process' % lock_fpath)
+        return False
+
+    ## serialize client information in to the .setacl_lock file
+    (time,ip,uid) = getClientInfo()
+    f = open( lock_fpath, 'wb' )
+    pickle.dump({'time':time,'ip':ip,'uid':uid,'aces':aces}, f)
+    f.close()
+
     cmd += '"%s" %s' % ( ', '.join(aces), fpath )
 
-    s = Shell()
+    s   = Shell()
     rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=None)
     if rc != 0:
         logger.error('%s failed' % cmd)
-        return False 
-    else:
-        return True
+
+    ## cleanup lock file regardless the result
+    try:
+        os.remove(lock_fpath)
+    except:
+        pass
+
+    return not rc
    
 def __fs_walk_error__(err):
     ''' handles error if not able to perform listdir on a file.

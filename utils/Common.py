@@ -11,6 +11,7 @@ import locale
 import ConfigParser
 import StringIO
 import gzip
+import socket
 
 from colorlog import ColoredFormatter
 
@@ -40,6 +41,15 @@ def gzipContent(content):
     f.write(content)
     f.close()
     return out.getvalue()
+
+def getClientInfo():
+    '''retrieve current client environment information.
+    '''
+    ip   = socket.gethostbyname(socket.gethostname())
+    uid  = os.getlogin()
+    time = datetime.datetime.now()
+
+    return (time,ip,uid)
 
 def csvArgsToList(csvArg):
 

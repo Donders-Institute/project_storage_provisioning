@@ -1,0 +1,127 @@
+#!/bin/env python
+import sys
+import os 
+from datetime import datetime 
+from argparse import ArgumentParser
+
+## adding PYTHONPATH for access to utility modules and 3rd-party libraries
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from utils.ACL    import getACE, setACE, delACE, getRoleFromACE, ROLE_ACL
+from utils.Common import getMyLogger, csvArgsToList
+from utils.Report import printRoleTable
+from utils.IProjectDB import Action,getDBConnectInfo,setProjectRoleConfigActions,getProjectRoleConfigActions,updateProjectDatabase
+
+## execute the main program
+if __name__ == "__main__":
+
+    parg = ArgumentParser(description='activates project roles settings pending in the ProjectDB', version="0.1")
+
+    ## optional arguments
+    parg.add_argument('-l','--loglevel',
+                      action  = 'store',
+                      dest    = 'verbose',
+                      type    = int,
+                      choices = [0, 1, 2, 3],
+                      default = 0,
+                      help    = 'set one of the following verbosity levels. 0|default:WARNING, 1:ERROR, 2:INFO, 3:DEBUG')
+
+    parg.add_argument('-d','--basedir',
+                      action  = 'store',
+                      dest    = 'basedir',
+                      default = '/project',
+                      help    = 'set the basedir in which the project storages are located')
+
+    parg.add_argument('-f','--force',
+                      action  = 'store_true',
+                      dest    = 'force',
+                      default = False,
+                      help    = 'force updating the ACL even the user is already in the given role, useful for fixing ACL table')
+
+    parg.add_argument('-t','--test',
+                      action  = 'store_true',
+                      dest    = 'do_test',
+                      default = False,
+                      help    = 'perform a test run without performing ACL settings on project directory')
+
+    parg.add_argument('-c','--mkdir',
+                      action  = 'store_true',
+                      dest    = 'do_mkdir',
+                      default = False,
+                      help    = 'mkdir a new project directory instead of a filer volume when the project directory does not exist')
+
+    args = parg.parse_args()
+
+    logger = getMyLogger(name=__file__, lvl=args.verbose)
+
+    ## project database connection information
+    (db_host, db_uid, db_name, db_pass) = getDBConnectInfo()
+    
+    ## retrieve pending actions
+    actions = getProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, lvl=args.verbose)
+
+    if not actions:
+        ## break the program when no pending actions
+        logger.warn('I have nothing to do!')
+        sys.exit(0) 
+
+    for a in actions:
+        logger.debug(repr(a))
+
+    ## re-org actions in projects so that we can perform actions by project
+    prjs = list( set(map(lambda x:x.pid, actions)) )
+
+    for pid in prjs:
+
+        p_actions = filter(lambda x:x.pid==pid, actions)
+
+        logger.info('performing actions on project: %s' % pid)
+
+        p_dir = os.path.join(args.basedir, pid)
+
+        if not os.path.exists( p_dir ):
+
+            if args.do_mkdir:
+                ## create project directory using mkdir 
+                logger.info('  |- creating directory for project: %s' % pid)
+                os.mkdir( os.path.join(args.basedir, pid) )
+            else: 
+                ## create project volume if the project directory is not presented
+                logger.info('  |- creating volume for project: %s' % pid)
+
+        ## perform set ACL action
+        logger.info('  |-> performing set ACL on project: %s' % pid)
+        _set_a     = filter(lambda x:x.action=='set' , p_actions)
+        _l_admin   = map(lambda x:x.uid, filter(lambda x:x.role=='admin'      , _set_a))
+        _l_user    = map(lambda x:x.uid, filter(lambda x:x.role=='user'       , _set_a))
+        _l_contrib = map(lambda x:x.uid, filter(lambda x:x.role=='contributor', _set_a))
+
+        rc = True
+        if not args.do_test:
+            rc = setACE(p_dir, admins=_l_admin, users=_l_user, contributors=_l_contrib, force=args.force, lvl=args.verbose)
+        else:
+            logger.info('  |- set admin role: %s'       % repr(_l_admin))
+            logger.info('  |- set contributor role: %s' % repr(_l_contrib))
+            logger.info('  |- set user role: %s'        % repr(_l_user))
+
+        if rc:
+            for a in _set_a:
+                a.atime = datetime.now()
+
+        ## perform del ACL action
+        logger.info('  |- performing del ACL on project: %s' % pid)
+        _del_a = filter(lambda x:x.action=='del' , p_actions)
+        _l_user= map(lambda x:x.uid, _del_a)
+
+        rc = True
+        if not args.do_test:
+            rc = delACE(p_dir, _l_user, force=args.force, lvl=args.verbose)
+        else:
+            logger.info('  |- del user(s): %s'        % repr(_l_user))
+
+        if rc:
+            for a in _del_a:
+                a.atime = datetime.now()
+
+    ## update project database on activate roles
+    setProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, actions=filter(lambda x:x.atime, actions), lvl=args.verbose)
