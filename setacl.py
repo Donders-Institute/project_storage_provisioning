@@ -7,10 +7,13 @@ from argparse import ArgumentParser
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, setACE, delACE
-from utils.Common import getMyLogger, csvArgsToList
+from utils.Common import getConfig, getMyLogger, csvArgsToList
 
 ## execute the main program
 if __name__ == "__main__":
+
+    ## load configuration file
+    cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/etc/config.ini' )
 
     parg = ArgumentParser(description='sets/adds access rights to project storage', version="0.1")
 
@@ -46,6 +49,7 @@ if __name__ == "__main__":
                       dest    = 'admins',
                       default = '',
                       help    = 'set list of system uids separated by "," for the admin role')
+
     parg.add_argument('-f','--force',
                       action  = 'store_true',
                       dest    = 'force',
@@ -55,7 +59,7 @@ if __name__ == "__main__":
     parg.add_argument('-d','--basedir',
                       action  = 'store',
                       dest    = 'basedir',
-                      default = '/project',
+                      default = cfg.get('PPS','PROJECT_BASEDIR'),
                       help    = 'set the basedir in which the project storages are located')
 
 #    parg.add_argument('-n','--new',

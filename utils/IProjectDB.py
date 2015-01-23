@@ -36,25 +36,23 @@ except Exception, e:
     import mysql.connector as mdb
     from mysql.connector import errorcode
 
-def getDBConnectInfo():
+def getDBConnectInfo(cfg):
     '''common function to get database connection information
     '''
   
-    ## TODO: get information from configuration file
-
     ## project database connection information
-    db_host   = 'dccn-l004.fcdonders.nl'
-    db_uid    = 'acl'
-    db_name   = 'fcdc'
-    
-    ## read database connection password from stdin
-    db_pass   = None
+    db_host   = cfg.get('PPS','PDB_HOST') 
+    db_uid    = cfg.get('PPS','PDB_USER') 
+    db_name   = cfg.get('PPS','PDB_DATABASE')
+    db_pass   = cfg.get('PPS','PDB_PASSWORD')
 
-    if sys.stdin.isatty(): ## for interactive password typing
-        db_pass = getpass.getpass('Project DB password: ')
-    else: ## for pipeing-in password
-        print 'Project DB password: '
-        db_pass = sys.stdin.readline().rstrip()
+    if not db_pass:
+        ## try ask for password from the interactive shell
+        if sys.stdin.isatty(): ## for interactive password typing
+            db_pass = getpass.getpass('Project DB password: ')
+        else: ## for pipeing-in password
+            print 'Project DB password: '
+            db_pass = sys.stdin.readline().rstrip()
 
     return (db_host, db_uid, db_name, db_pass)
 

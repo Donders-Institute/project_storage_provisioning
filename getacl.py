@@ -7,12 +7,15 @@ from argparse import ArgumentParser
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, setACE, delACE, getRoleFromACE, ROLE_ACL
-from utils.Common import getMyLogger, csvArgsToList
+from utils.Common import getConfig, getMyLogger, csvArgsToList
 from utils.Report import printRoleTable
 from utils.IProjectDB import getDBConnectInfo,updateProjectDatabase
 
 ## execute the main program
 if __name__ == "__main__":
+
+    ## load configuration file
+    cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/etc/config.ini' )
 
     parg = ArgumentParser(description='gets access rights of project storages', version="0.1")
 
@@ -34,7 +37,7 @@ if __name__ == "__main__":
     parg.add_argument('-d','--basedir',
                       action  = 'store',
                       dest    = 'basedir',
-                      default = '/project',
+                      default = cfg.get('PPS','PROJECT_BASEDIR'),
                       help    = 'set the basedir in which the project storages are located')
 
     parg.add_argument('-u','--updatedb',
@@ -77,5 +80,5 @@ if __name__ == "__main__":
     printRoleTable(roles)
 
     if args.updatedb:
-        (db_host, db_uid, db_name, db_pass) = getDBConnectInfo()
+        (db_host, db_uid, db_name, db_pass) = getDBConnectInfo(cfg)
         updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)

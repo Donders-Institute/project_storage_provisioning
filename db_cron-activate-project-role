@@ -8,12 +8,16 @@ from argparse import ArgumentParser
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, setACE, delACE, getRoleFromACE, ROLE_ACL
-from utils.Common import getMyLogger, csvArgsToList
+from utils.Common import getConfig, getMyLogger, csvArgsToList
 from utils.Report import printRoleTable
+from utils.IStorage import StorageType, createProjectDirectory
 from utils.IProjectDB import Action,getDBConnectInfo,setProjectRoleConfigActions,getProjectRoleConfigActions,updateProjectDatabase
 
 ## execute the main program
 if __name__ == "__main__":
+
+    ## load configuration file
+    cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/etc/config.ini' )
 
     parg = ArgumentParser(description='activates project roles settings pending in the ProjectDB', version="0.1")
 
@@ -29,7 +33,7 @@ if __name__ == "__main__":
     parg.add_argument('-d','--basedir',
                       action  = 'store',
                       dest    = 'basedir',
-                      default = '/project',
+                      default = cfg.get('PPS','PROJECT_BASEDIR'),
                       help    = 'set the basedir in which the project storages are located')
 
     parg.add_argument('-f','--force',
@@ -42,7 +46,7 @@ if __name__ == "__main__":
                       action  = 'store_true',
                       dest    = 'do_test',
                       default = False,
-                      help    = 'perform a test run without actually changing ACL on project directory, useful for testing the workflow')
+                      help    = 'perform a test run, i.e. volume creation on central storage and ACL setting are ignored')
 
     parg.add_argument('-c','--mkdir',
                       action  = 'store_true',
@@ -55,7 +59,7 @@ if __name__ == "__main__":
     logger = getMyLogger(name=__file__, lvl=args.verbose)
 
     ## project database connection information
-    (db_host, db_uid, db_name, db_pass) = getDBConnectInfo()
+    (db_host, db_uid, db_name, db_pass) = getDBConnectInfo(cfg)
     
     ## retrieve pending actions
     actions = getProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, lvl=args.verbose)
@@ -64,9 +68,6 @@ if __name__ == "__main__":
         ## break the program when no pending actions
         logger.warn('I have nothing to do!')
         sys.exit(0) 
-
-    for a in actions:
-        logger.debug(repr(a))
 
     ## re-org actions in projects so that we can perform actions by project
     prjs = list( set(map(lambda x:x.pid, actions)) )
@@ -79,15 +80,32 @@ if __name__ == "__main__":
 
         p_dir = os.path.join(args.basedir, pid)
 
+        ## create project directory if not available
         if not os.path.exists( p_dir ):
 
+            rc    = True
+            stype = ''
             if args.do_mkdir:
-                ## create project directory using mkdir 
-                logger.info('  |- creating directory for project: %s' % pid)
-                os.mkdir( os.path.join(args.basedir, pid) )
-            else: 
-                ## create project volume if the project directory is not presented
-                logger.info('  |- creating volume for project: %s' % pid)
+                stype = 'fs_dir'
+                ## quota for 'fs_dir' is a place holder, not actually used by mkdir
+                quota = '1GB'
+            else:
+                ## TODO: retrieve project quota from database
+                quota = '1GB'
+
+                if args.do_test:
+                    ## in test mode, we create a local directory
+                    stype = 'fs_dir'
+                else:
+                    stype = 'netapp_volume'
+
+            logger.info('  |- creating project directory as %s' % stype)
+
+            rc = createProjectDirectory(p_dir, quota, StorageType[stype], cfg, lvl=args.verbose)
+
+            if not rc:
+                logger.error('failed to create directory for project: %s' % pid)
+                continue
 
         ## perform set ACL action
         logger.info('  |-> performing set ACL on project: %s' % pid)

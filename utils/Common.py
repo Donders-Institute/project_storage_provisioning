@@ -35,6 +35,29 @@ class HashableDict(dict):
     def __hash__(self):
         return hash(tuple(sorted(self.items())))
 
+def getConfig(config_file='config.ini'):
+    ''' read and parse the config.ini file
+    '''
+    default_cfg = {
+        # Project base dir arrangement
+        'PROJECT_BASEDIR'  : '/project' ,
+        'PROJECT_DIR_OUID' : 'project'  , 
+        'PROJECT_DIR_OGID' : 'project_g',
+        # NetApp filer management interface
+        'FILER_ADMIN'      : '',
+        'FILER_MGMT_SERVER': '', 
+        # Project database interface
+        'PDB_USER'         : '', 
+        'PDB_PASSWORD'     : '',
+        'PDB_HOST'         : '',
+        'PDB_DATABASE'     : '' 
+    }
+
+    config = ConfigParser.SafeConfigParser(default_cfg)
+    config.read(config_file)
+
+    return config
+
 def gzipContent(content):
     out = StringIO.StringIO()
     f = gzip.GzipFile(fileobj=out, mode='w', compresslevel=5)

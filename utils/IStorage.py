@@ -12,10 +12,29 @@ from utils.Shell  import *
 
 StorageType = {'fs_dir':0, 'netapp_volume':1}
 
-ProjectDirOwnerUser  = 'project'
-ProjectDirOwnerGroup = 'project_g'
+def createProjectDirectory(fpath, quota, type, cfg, lvl=0):
+    '''general function for callers to make project directory'''
 
-def makeProjectDirectoryFS(fpath, lvl=0):
+    logger = getMyLogger(lvl=lvl)
+
+    ouid = cfg.get('PPS','PROJECT_DIR_OUID')
+    ogid = cfg.get('PPS','PROJECT_DIR_OGID')
+
+    rc = True
+
+    if type == StorageType['fs_dir']:
+        rc = __makeProjectDirectoryFS__(fpath, quota, ouid, ogid, lvl)
+    elif type == StorageType['netapp_volume']:
+        filer_admin       = cfg.get('PPS','FILER_ADMIN')
+        filer_mgmt_server = cfg.get('PPS','FILER_MGMT_SERVER')
+        rc = __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_mgmt_server, lvl)
+    else:
+        logger.error('unknown storage type: %s' % type)   
+
+    return rc
+
+### internal functions
+def __makeProjectDirectoryFS__(fpath, quota, ouid, ogid, lvl):
     '''create a project directory directly on the file system'''
 
     logger = getMyLogger(lvl=lvl)
@@ -26,14 +45,14 @@ def makeProjectDirectoryFS(fpath, lvl=0):
     else:
         try:
             os.mkdir(fpath,0550)
-            os.chown(fpath, pwd.getpwnam(ProjectDirOwnerUser).pw_uid, grp.getgrnam(ProjectDirOwnerGroup).gr_gid)
+            os.chown(fpath, pwd.getpwnam(ouid).pw_uid, grp.getgrnam(ogid).gr_gid)
         except OSError, e:
             logger.error('cannot create new directory: %s' % fpath)
             rc = False
 
     return rc
 
-def makeProjectDirectoryNetApp(fpath, quota, admin_login='admin', mgmt_server='filer-a-mi', lvl=0):
+def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_mgmt_server, lvl):
     '''create a project directory directly on the NetApp filer running Data ONTAP'''
 
     logger = getMyLogger(lvl=lvl)
@@ -81,7 +100,7 @@ def makeProjectDirectoryNetApp(fpath, quota, admin_login='admin', mgmt_server='f
         ## 2. create volume
         vol_name = 'project_%s' % fpath.split('/')[-1].replace('.','_')
    
-        cmd = 'ssh %s@%s "volume create -vserver atreides -volume %s -aggregate %s -size %s -user %s -group %s -junction-path %s -autosize false -foreground true"' % (admin_login, mgmt_server, vol_name, g_aggr['name'], quota, ProjectDirOwnerUser, ProjectDirOwnerGroup, fpath)
+        cmd = 'ssh %s@%s "volume create -vserver atreides -volume %s -aggregate %s -size %s -user %s -group %s -junction-path %s -autosize false -foreground true"' % (filer_admin, filer_mgmt_server, vol_name, g_aggr['name'], quota, ouid, ogid, fpath)
 
         logger.debug('cmd creating volume: %s' % cmd)
 
@@ -99,7 +118,6 @@ def makeProjectDirectoryNetApp(fpath, quota, admin_login='admin', mgmt_server='f
             logger.error('directory not found: %s, check volume creation in the filer' % fpath)
             return False
   
-### private functions
 def __getSizeInTB__(size):
     '''convert size string to numerical size in TB'''
 

@@ -7,10 +7,13 @@ from argparse import ArgumentParser
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, setACE, delACE, getRoleFromACE, ROLE_ACL
-from utils.Common import getMyLogger, csvArgsToList
+from utils.Common import getConfig, getMyLogger, csvArgsToList
 
 ## execute the main program
 if __name__ == "__main__":
+
+    ## load configuration file
+    cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/etc/config.ini' )
 
     parg = ArgumentParser(description='delete user\'s access right to project storage', version="0.1")
 
@@ -43,7 +46,7 @@ if __name__ == "__main__":
     parg.add_argument('-d','--basedir',
                       action  = 'store',
                       dest    = 'basedir',
-                      default = '/project',
+                      default = cfg.get('PPS','PROJECT_BASEDIR'),
                       help    = 'set the basedir in which the project storages are located (default: %(default)s)')
 
     args = parg.parse_args()
