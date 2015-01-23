@@ -106,6 +106,12 @@ if __name__ == "__main__":
             if not rc:
                 logger.error('failed to create directory for project: %s' % pid)
                 continue
+            else:
+                # refresh the PROJECT_BASEDIR to get access to the newly created volume
+                os.listdir(cfg.get('PPS','PROJECT_BASEDIR'))
+                if os.path.exists( p_dir ):
+                    logger.error('created directory not available: %s' % p_dir)
+                    continue
 
         ## perform set ACL action
         logger.info('  |-> performing set ACL on project: %s' % pid)

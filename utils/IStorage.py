@@ -66,7 +66,7 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
         s = Shell()
 
         ## 1. finding up aggregate information
-        cmd = 'ssh %s@%s "storage aggregate show -fields availsize,volcount -stat online"' % (admin_login, mgmt_server)
+        cmd = 'ssh %s@%s "storage aggregate show -fields availsize,volcount -stat online"' % (filer_admin, filer_mgmt_server)
 
         logger.debug('cmd listing aggregates: %s' % cmd)
 
@@ -100,7 +100,7 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
         ## 2. create volume
         vol_name = 'project_%s' % fpath.split('/')[-1].replace('.','_')
    
-        cmd = 'ssh %s@%s "volume create -vserver atreides -volume %s -aggregate %s -size %s -user %s -group %s -junction-path %s -autosize false -foreground true"' % (filer_admin, filer_mgmt_server, vol_name, g_aggr['name'], quota, ouid, ogid, fpath)
+        cmd = 'ssh %s@%s "volume create -vserver atreides -volume %s -aggregate %s -size %s -user %s -group %s -junction-path %s -security-style unix -unix-permissions 0550 -autosize false -foreground true"' % (filer_admin, filer_mgmt_server, vol_name, g_aggr['name'], quota, ouid, ogid, fpath)
 
         logger.debug('cmd creating volume: %s' % cmd)
 
@@ -109,14 +109,8 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
             logger.error('%s failed' % cmd)
             logger.error('%s' % output)
             return False
-
-        ## 3. check if the path is presented
-        if os.path.exists(fpath):
-            os.chmod(fpath, stat.S_IRUSR ^ stat.S_IXUSR ^ stat.S_IRGRP ^ stat.S_IXGRP)
-            return True
         else:
-            logger.error('directory not found: %s, check volume creation in the filer' % fpath)
-            return False
+            return True
   
 def __getSizeInTB__(size):
     '''convert size string to numerical size in TB'''
