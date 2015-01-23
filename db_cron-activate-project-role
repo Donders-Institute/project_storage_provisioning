@@ -42,13 +42,13 @@ if __name__ == "__main__":
                       action  = 'store_true',
                       dest    = 'do_test',
                       default = False,
-                      help    = 'perform a test run without performing ACL settings on project directory')
+                      help    = 'perform a test run without actually changing ACL on project directory, useful for testing the workflow')
 
     parg.add_argument('-c','--mkdir',
                       action  = 'store_true',
                       dest    = 'do_mkdir',
                       default = False,
-                      help    = 'mkdir a new project directory instead of a filer volume when the project directory does not exist')
+                      help    = 'create project directory with mkdir instead of adding new filer volume for new project')
 
     args = parg.parse_args()
 
