@@ -58,11 +58,11 @@ if __name__ == "__main__":
                       default = '/project',
                       help    = 'set the basedir in which the project storages are located')
 
-    parg.add_argument('-n','--new',
-                      action  = 'store_true',
-                      dest    = 'do_create',
-                      default = False,
-                      help    = 'create new project directory if it does not exist')
+#    parg.add_argument('-n','--new',
+#                      action  = 'store_true',
+#                      dest    = 'do_create',
+#                      default = False,
+#                      help    = 'create new project directory if it does not exist')
 
     args = parg.parse_args()
 
@@ -102,9 +102,9 @@ if __name__ == "__main__":
 
         p = os.path.join(args.basedir, id)
 
-        if not os.path.exists(p) and args.do_create:
-            os.mkdir(p)
-            ## TODO: set project folder to proper ownership, e.g. project:project_g
+#        if not os.path.exists(p) and args.do_create:
+#            os.mkdir(p)
+#            ## TODO: set project folder to proper ownership, e.g. project:project_g
 
         if os.path.exists(p):
             logger.info('setting file or directory: %s' % p)
