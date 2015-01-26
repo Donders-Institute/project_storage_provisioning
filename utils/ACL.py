@@ -154,7 +154,7 @@ def setDefaultACE(path, lvl=0):
         n_aces.append(':'.join(a))
 
     opts  = ['-R', '-s']
-    return __nfs4_setfacl__(path, aces, opts, lvl=lvl)
+    return __nfs4_setfacl__(path, n_aces, opts, lvl=lvl)
 
 def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
     ''' adds/sets ACEs for user, contributor and admin roles.
