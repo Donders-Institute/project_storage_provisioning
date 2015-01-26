@@ -57,7 +57,7 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
 
     logger = getMyLogger(lvl=lvl)
 
-    quotaTB = __getSizeInTB__(quota)
+    quotaGB = __getSizeInGB__(quota)
 
     if os.path.exists(fpath):
         logger.warn('directory already exists: %s ... skip creation' % fpath)
@@ -87,14 +87,16 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
         for l in output.split('\n'):
             m = re_aggr_info.match(l.strip())
             if m:
-                aggrs.append({'name': m.group(1), 'availsize': __getSizeInTB__(m.group(2)), 'volcount': int(m.group(3))})
+                aggrs.append({'name': m.group(1), 'availsize': __getSizeInGB__(m.group(2)), 'volcount': int(m.group(3))})
             else:
                 pass
 
         g_aggr = sorted(aggrs, key=operator.itemgetter('availsize'), reverse=True)[0]
 
-        if g_aggr['availsize'] <= quotaTB:
-            logger.warn('aggreate with largest available size smaller the project quota: %f < %f' % (g_aggr['availsize'],quotaTB))
+        if g_aggr['availsize'] <= quotaGB:
+            logger.error('aggreate with largest available size smaller the project quota: %f < %f' % (g_aggr['availsize'],quotaGB))
+            return False
+
         logger.info('selected aggregate: %s' % repr(g_aggr))
 
         ## 2. create volume
@@ -112,35 +114,35 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
         else:
             return True
   
-def __getSizeInTB__(size):
-    '''convert size string to numerical size in TB'''
+def __getSizeInGB__(size):
+    '''convert size string to numerical size in GB'''
 
     logger = getMyLogger()
 
     s = 0
 
     if size.find('PB') != -1:
-        s = float(size.replace('PB','')) * 1024
+        s = float(size.replace('PB','')) * (1024**2)
 
     elif size.find('TB') != -1:
-        s = float(size.replace('TB',''))
+        s = float(size.replace('TB','')) * 1024
 
     elif size.find('GB') != -1:
-        s = float(size.replace('GB','')) / 1024
+        s = float(size.replace('GB',''))
 
     elif size.find('MB') != -1:
-        s = float(size.replace('MB','')) / (1024**2)
+        s = float(size.replace('MB','')) / (1024)
         
     elif size.find('KB') != -1:
-        s = float(size.replace('MB','')) / (1024**3)
+        s = float(size.replace('MB','')) / (1024**2)
 
     elif size.find('B') != -1:
-        s = float(size.replace('B','')) / (1024**4)
+        s = float(size.replace('B','')) / (1024**3)
 
     else:
         ## assuming unit of byte if input argument contains only numerical characters
         try:
-            s = float(size) / (1024**4)
+            s = float(size) / (1024**3)
         except:
             logger.error('cannot convert size to bytes: %s' % s)
             raise

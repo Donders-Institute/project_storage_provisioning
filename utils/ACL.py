@@ -93,13 +93,9 @@ def delACE(path, users, force=False, lvl=0):
         else:
             logger.info('deleting ACEs of user: %s' % u)
 
-    logger.debug('***** new ACL *****')
-    for a in n_aces:
-        logger.debug(a)
-
     _opts = ['-R','-s']
 
-    return __nfs4_setfacl__(path, n_aces, _opts)
+    return __nfs4_setfacl__(path, n_aces, _opts, lvl=lvl)
 
 def getACE(path, user=None, recursive=False, lvl=0):
     ''' gets ACEs for given user or for all ACEs if user is not given. 
@@ -138,6 +134,27 @@ def getACE(path, user=None, recursive=False, lvl=0):
         acl[path] = __nfs4_getfacl__(path)
 
     return acl
+
+def setDefaultACE(path, lvl=0):
+    ''' sets initial / default ACEs for USER, GROUP and EVERYONE
+    '''
+    logger = getMyLogger(lvl=lvl)
+
+    ## get the existing ACL
+    aces = getACE(path, recursive=False, lvl=lvl)[path]
+
+    ## compose new ACL based on the existing ACL
+    n_aces = []
+    for a in aces:
+        u = a[2].split('@')[0]
+        if u in ['GROUP','OWNER','EVERYONE']:
+            ## to make it general: remove 'f' and 'd' bits and re-prepend them again
+            a[1] = 'fd%s' % a[1].replace('f','').replace('d','')
+
+        n_aces.append(':'.join(a))
+
+    opts  = ['-R', '-s']
+    return __nfs4_setfacl__(path, aces, opts, lvl=lvl)
 
 def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
     ''' adds/sets ACEs for user, contributor and admin roles.
@@ -196,19 +213,39 @@ def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
             ## Do not need to set the DENY ACE's
             #n_aces.insert(0, 'D:fd:%s@dccn.nl:%s' % (u, _perm['D']))
 
-    logger.debug('***** new ACL *****')
-    for a in n_aces:
-        logger.debug(a)
+    return __nfs4_setfacl__(path, n_aces, opts, lvl=lvl)
 
-    return __nfs4_setfacl__(path, n_aces, opts)
+## internal functions
+def __curateDefaultACE__(aces):
+    ''' curates ACEs for USER, GROUP and EVERYONE
+         - make the default rules inherited by sub-directories, making Windows friendly
+    '''
 
-def __nfs4_setfacl__(fpath, aces, options=None):
+    ## compose new ACL based on the existing ACL
+    n_aces = []
+    for ace in aces:
+        a = ace.split(':')
+        u = a[2].split('@')[0]
+        if u in ['GROUP','OWNER','EVERYONE']:
+            ## to make it general: remove 'f' and 'd' bits and re-prepend them again
+            a[1] = 'fd%s' % a[1].replace('f','').replace('d','')
+        n_aces.append(':'.join(a))
+
+    return n_aces
+
+def __nfs4_setfacl__(fpath, aces, options=None, lvl=0):
     ''' wrapper for calling nfs4_setfacl command.
          - fpath  : the path the ACEs will be applied
          - aces   : the ACEs in a list of strings
          - options: the command-line options in a list of strings 
     '''
-    logger = getMyLogger()
+    logger = getMyLogger(lvl=lvl)
+
+    aces = __curateDefaultACE__(aces)
+
+    logger.debug('***** new ACL to set *****')
+    for a in aces:
+        logger.debug(a)
 
     if options:
         cmd = 'nfs4_setfacl %s ' % ' '.join(options)

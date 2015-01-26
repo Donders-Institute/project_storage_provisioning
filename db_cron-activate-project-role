@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
             rc    = True
             stype = ''
-            quota = '%sB' % p_actions[0].pquota
+            quota = '%sGB' % p_actions[0].pquota
             if args.do_mkdir:
                 stype = 'fs_dir'
             else:
@@ -105,10 +105,10 @@ if __name__ == "__main__":
             else:
                 # refresh the PROJECT_BASEDIR to get access to the newly created volume
                 os.listdir(cfg.get('PPS','PROJECT_BASEDIR'))
-                if os.path.exists( p_dir ):
+                if not os.path.exists( p_dir ):
                     logger.error('created directory not available: %s' % p_dir)
                     continue
-
+                    
         ## perform set ACL action
         logger.info('  |-> performing set ACL on project: %s' % pid)
         _set_a     = filter(lambda x:x.action=='set' , p_actions)
@@ -143,5 +143,5 @@ if __name__ == "__main__":
             for a in _del_a:
                 a.atime = datetime.now()
 
-    ## update project database on activate roles
-    setProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, actions=filter(lambda x:x.atime, actions), lvl=args.verbose)
+        ## update project database on activate roles for this project
+        setProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, actions=filter(lambda x:x.atime, actions), lvl=args.verbose)

@@ -23,10 +23,20 @@ class Action:
     def __repr__(self):
         return repr(self.__dict__)
 
-    def __eq__(self, other):
-        if not isinstance(other, Job):
+    def __cmp__(self,other):
+        '''compare actions by creation time'''
+        if not isinstance(other, Action):
             raise NotImplementedError
-        return self.uid == other.uid and self.pid == other.pid and self.role == other.role and self.action == other.action and self.ctime == other.ctime
+        return cmp(self.ctime, other.ctime)
+
+    def __eq__(self, other):
+        '''action is considered identical if matching uid and pid
+           when identical action is found, confliction is resolved
+           by taking into account the action with later creation time.
+        '''
+        if not isinstance(other, Action):
+            raise NotImplementedError
+        return self.uid == other.uid and self.pid == other.pid
 
 ## loading MySQL library for updating the project database
 try:
@@ -89,11 +99,11 @@ def setProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, actions=[], l
                 crs = cnx.cursor()
             
                 ## select actions that are not activted 
-                qry = 'UPDATE projectmembers SET activated=\'yes\',updated=%s WHERE project_id=%s AND user_id=%s AND role=%s AND action=%s AND created=%s'
+                qry = 'UPDATE projectmembers SET activated=\'yes\',updated=%s WHERE project_id=%s AND user_id=%s AND created<=%s'
                 data = []
 
                 for a in actions:
-                    data.append( (a.atime,a.pid,a.uid,a.role,a.action,a.ctime) )
+                    data.append( (a.atime,a.pid,a.uid,a.ctime) )
 
                 ## execute queries via the db cursor, transaction *shoud be* enabled by default
                 if data:
@@ -166,8 +176,16 @@ def getProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, lvl=0):
                 crs.execute(qry)
 
                 for (uid,pid,role,created,action,pquota) in crs:
-                    actions.append(Action( uid=uid, pid=pid, role=role, action=action, ctime=created, pquota=pquota ))
-                    logger.debug('pid:{} uid:{} role:{} action:{} ctime:{:%Y-%m-%d %H:%M:%S} prj_space:{} bytes'.format(uid,pid,role,action,created,pquota))
+                    _a_new = Action( uid=uid, pid=pid, role=role, action=action, ctime=created, pquota=pquota )
+                    if actions.count(_a_new) > 0:
+                        ## when an action on same uid,pid is found,
+                        ## check the action's ctime and take the latest created one
+                        idx = actions.index(_a_new) 
+                        if _a_new.ctime > actions[ idx ].ctime:
+                             actions[ idx ] = _a_new
+                    else:
+                        ## else, add the action to the list
+                        actions.append(_a_new)
 
             except Exception, e:
                 logger.exception('Project DB select failed')
@@ -186,6 +204,11 @@ def getProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, lvl=0):
                     cnx.close()
                 except Exception, e:
                     pass
+
+    ## showing all actions to be executed
+    for a in actions:
+        logger.debug('pid:{} uid:{} role:{} action:{} ctime:{:%Y-%m-%d %H:%M:%S} prj_space:{} GB'.format(a.uid,a.pid,a.role,a.action,a.ctime,a.pquota))
+
     return actions
 
 def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
