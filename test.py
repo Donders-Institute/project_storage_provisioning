@@ -10,7 +10,7 @@ from utils.IStorage import StorageType,createProjectDirectory
 cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/etc/config.ini' )
 
 fpath = '/project/0000000.03'
-quota = '1GB'
+quota = '%sB' % '10737418240' 
 stype = 'netapp_volume'
 
 rc = createProjectDirectory(fpath, quota, StorageType[stype], cfg, lvl=3)
