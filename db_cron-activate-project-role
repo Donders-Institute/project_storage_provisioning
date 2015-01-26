@@ -85,14 +85,10 @@ if __name__ == "__main__":
 
             rc    = True
             stype = ''
+            quota = '%sB' % p_actions[0].pquota
             if args.do_mkdir:
                 stype = 'fs_dir'
-                ## quota for 'fs_dir' is a place holder, not actually used by mkdir
-                quota = '1GB'
             else:
-                ## TODO: retrieve project quota from database
-                quota = '1GB'
-
                 if args.do_test:
                     ## in test mode, we create a local directory
                     stype = 'fs_dir'

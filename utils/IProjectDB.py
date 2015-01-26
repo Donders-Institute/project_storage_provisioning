@@ -14,6 +14,7 @@ class Action:
         self.action = None
         self.ctime  = None
         self.atime  = None
+        self.pquota = None
         self.__dict__.update(kwargs)
 
     def __str__(self):
@@ -160,13 +161,13 @@ def getProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, lvl=0):
                 crs = cnx.cursor()
             
                 ## select actions that are not activted 
-                qry = 'SELECT user_id,project_id,role,created,action FROM projectmembers WHERE activated=\'no\''
+                qry = 'SELECT a.user_id,a.project_id,a.role,a.created,a.action,b.calculatedProjectSpace FROM projectmembers as a, projects as b WHERE a.activated=\'no\' AND a.project_id=b.id'
 
                 crs.execute(qry)
 
-                for (uid,pid,role,created,action) in crs:
-                    actions.append(Action( uid=uid, pid=pid, role=role, action=action, ctime=created ))
-                    logger.debug('pid:{} uid:{} role:{} action:{} ctime:{:%Y-%m-%d %H:%M:%S}'.format(uid,pid,role,action,created))
+                for (uid,pid,role,created,action,pquota) in crs:
+                    actions.append(Action( uid=uid, pid=pid, role=role, action=action, ctime=created, pquota=pquota ))
+                    logger.debug('pid:{} uid:{} role:{} action:{} ctime:{:%Y-%m-%d %H:%M:%S} prj_space:{} bytes'.format(uid,pid,role,action,created,pquota))
 
             except Exception, e:
                 logger.exception('Project DB select failed')

@@ -115,6 +115,8 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
 def __getSizeInTB__(size):
     '''convert size string to numerical size in TB'''
 
+    logger = getMyLogger()
+
     s = 0
 
     if size.find('PB') != -1:
@@ -136,6 +138,11 @@ def __getSizeInTB__(size):
         s = float(size.replace('B','')) / (1024**4)
 
     else:
-        s = 1.0 * size
+        ## assuming unit of byte if input argument contains only numerical characters
+        try:
+            s = float(size) / (1024**4)
+        except:
+            logger.error('cannot convert size to bytes: %s' % s)
+            raise
 
     return s
