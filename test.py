@@ -22,5 +22,5 @@ if rc:
     if not os.path.exists( fpath ):
         logger.error('created directory not available: %s' % fpath)
     else:
-        if not setDefaultACE(fpath, lvl=3):
+        if not setDefaultPrincipleACE(fpath, lvl=3):
             logger.error('failed to set default ACEs for path: %s' % fpath)

@@ -135,8 +135,8 @@ def getACE(path, user=None, recursive=False, lvl=0):
 
     return acl
 
-def setDefaultACE(path, lvl=0):
-    ''' sets initial / default ACEs for USER, GROUP and EVERYONE
+def setDefaultPrincipleACE(path, lvl=0):
+    ''' sets initial / default ACEs for default principles: USER, GROUP and EVERYONE
     '''
     logger = getMyLogger(lvl=lvl)
 
@@ -216,9 +216,9 @@ def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
     return __nfs4_setfacl__(path, n_aces, opts, lvl=lvl)
 
 ## internal functions
-def __curateDefaultACE__(aces):
-    ''' curates ACEs for USER, GROUP and EVERYONE
-         - make the default rules inherited by sub-directories, making Windows friendly
+def __forceDefaultPrincipleACE__(aces):
+    ''' return enforced ACEs for default principles, i.e. USER, GROUP and EVERYONE
+         - make the ACEs always inherited, making Windows friendly
     '''
 
     ## compose new ACL based on the existing ACL
@@ -241,7 +241,7 @@ def __nfs4_setfacl__(fpath, aces, options=None, lvl=0):
     '''
     logger = getMyLogger(lvl=lvl)
 
-    aces = __curateDefaultACE__(aces)
+    aces = __forceDefaultPrincipleACE__(aces)
 
     logger.debug('***** new ACL to set *****')
     for a in aces:
