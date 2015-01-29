@@ -116,13 +116,13 @@ if __name__ == "__main__":
         _l_user    = map(lambda x:x.uid, filter(lambda x:x.role=='user'       , _set_a))
         _l_contrib = map(lambda x:x.uid, filter(lambda x:x.role=='contributor', _set_a))
 
+        logger.info('  |- set admin role: %s'       % repr(_l_admin))
+        logger.info('  |- set contributor role: %s' % repr(_l_contrib))
+        logger.info('  |- set user role: %s'        % repr(_l_user))
+
         rc = True
         if not args.do_test:
             rc = setACE(p_dir, admins=_l_admin, users=_l_user, contributors=_l_contrib, force=args.force, lvl=args.verbose)
-        else:
-            logger.info('  |- set admin role: %s'       % repr(_l_admin))
-            logger.info('  |- set contributor role: %s' % repr(_l_contrib))
-            logger.info('  |- set user role: %s'        % repr(_l_user))
 
         if rc:
             for a in _set_a:
