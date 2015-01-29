@@ -267,10 +267,13 @@ def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
     return __nfs4_setfacl__(path, n_aces, opts, lvl=lvl)
 
 ## internal functions
-def __forceDefaultPrincipleACE__(aces):
-    ''' return enforced ACEs for default principles, i.e. USER, GROUP and EVERYONE
-         - make the ACEs always inherited, making Windows friendly
+def __curateACE__(aces, lvl=0):
+    ''' curate given ACEs with the following things:
+         - make the ACEs for USER,GROUP and EVERYONE always inherited, making Windows friendly
+         - remove ACEs associated with an invalid system account
     '''
+
+    logger = getMyLogger(lvl=lvl)
 
     ## compose new ACL based on the existing ACL
     n_aces = []
@@ -280,7 +283,11 @@ def __forceDefaultPrincipleACE__(aces):
         if u in ['GROUP','OWNER','EVERYONE']:
             ## to make it general: remove 'f' and 'd' bits and re-prepend them again
             a[1] = 'fd%s' % a[1].replace('f','').replace('d','')
-        n_aces.append(':'.join(a))
+            n_aces.append(':'.join(a))
+        elif userExist(u):
+            n_aces.append(':'.join(a))
+        else:
+            logger.warning('ignore ACE for invalid user: %s' % u)
 
     return n_aces
 
@@ -292,7 +299,7 @@ def __nfs4_setfacl__(fpath, aces, options=None, lvl=0):
     '''
     logger = getMyLogger(lvl=lvl)
 
-    aces = __forceDefaultPrincipleACE__(aces)
+    aces = __curateACE__(aces, lvl=lvl)
 
     logger.debug('***** new ACL to set *****')
     for a in aces:

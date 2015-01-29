@@ -12,8 +12,10 @@ import ConfigParser
 import StringIO
 import gzip
 import socket
+import pwd
 
 from colorlog import ColoredFormatter
+
 
 lc_formatter = ColoredFormatter(
         "%(log_color)s[%(levelname)-8s:%(name)s] %(message)s%(reset)s",
@@ -57,6 +59,16 @@ def getConfig(config_file='config.ini'):
     config.read(config_file)
 
     return config
+
+def userExist(username):
+    '''check if given user name is existing as a system user id'''
+    ick = False
+    try:
+        pwd.getpwnam(username)
+        ick = True
+    except KeyError,e:
+        pass
+    return ick
 
 def gzipContent(content):
     out = StringIO.StringIO()
