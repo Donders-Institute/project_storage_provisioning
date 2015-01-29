@@ -171,7 +171,7 @@ def getProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, lvl=0):
                 crs = cnx.cursor()
             
                 ## select actions that are not activted 
-                qry = 'SELECT a.user_id,a.project_id,a.role,a.created,a.action,b.calculatedProjectSpace FROM projectmembers as a, projects as b WHERE a.activated=\'no\' AND a.project_id=b.id'
+                qry = 'SELECT a.user_id,a.project_id,a.role,a.created,a.action,b.calculatedProjectSpace FROM projectmembers as a, projects as b WHERE a.activated=\'no\' AND b.calculatedProjectSpace > 0 AND a.project_id=b.id'
 
                 crs.execute(qry)
 
