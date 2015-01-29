@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import pickle
+import pprint
 from utils.Shell  import *
 from utils.Common import getMyLogger, getClientInfo
 
@@ -8,9 +9,59 @@ ROLE_ADMIN       = 'admin'
 ROLE_CONTRIBUTOR = 'contributor'
 ROLE_USER        = 'user'
 
-ROLE_ACL         = { ROLE_ADMIN       : 'RXWdDoy',
+ROLE_PERMISSION  = { ROLE_ADMIN       : 'RXWdDoy',
                      ROLE_CONTRIBUTOR : 'rwaDdxnNtTcy',
                      ROLE_USER        : 'RXy' }
+
+class ProjectRole:
+    '''object for project role'''
+    def __init__(self, **kwargs):
+        self.uid    = None
+        self.pid    = None
+        self.role   = None
+        self.__dict__.update(kwargs)
+
+    def getACE(self):
+        '''convert role into ACE string for accepted filesystem operations.
+        '''
+        all_permission = 'rwaDdxnNtTcCoy'
+
+        _alias_ = { 'R': 'rntcy',
+                    'W': 'watTNcCy',
+                    'X': 'xtcy' }
+
+        ace = {}
+        try:
+            _ace_a = ROLE_PERMISSION[self.role]
+
+            for k,v in _alias_.iteritems():
+                _ace_a = _ace_a.replace(k, v)
+
+            _ace_a = ''.join( list( set(list(_ace_a)) ) )
+            _ace_d = ''.join( list( set(list(all_permission)) - set(list(_ace_a)) ) )
+
+            ace['A'] = _ace_a
+            ace['D'] = _ace_d
+
+        except KeyError,e:
+            logger.error('No such role: %s' % self.role)
+
+        return ace
+
+    def __str__(self):
+        return pprint.pformat(self.__dict__)
+
+    def __repr__(self):
+        return repr(self.__dict__)
+
+    def __eq__(self, other):
+        '''action is considered identical if matching uid and pid
+           when identical action is found, conflict is resolved
+           by taking into account the action with later creation time.
+        '''
+        if not isinstance(other, ProjectRole):
+            raise NotImplementedError
+        return self.uid == other.uid and self.pid == other.pid
    
 def get_permission(role):
     ''' gets permission bits for DENY and ALLOW, given the role
@@ -21,23 +72,23 @@ def get_permission(role):
                 'W': 'watTNcCy',
                 'X': 'xtcy' }
  
-    acl = {} 
+    ace = {}
     try:
-        _acl_a = ROLE_ACL[role]
+        _ace_a = ROLE_PERMISSION[role]
 
         for k,v in _alias_.iteritems():
-            _acl_a = _acl_a.replace(k, v)
+            _ace_a = _ace_a.replace(k, v)
 
-        _acl_a = ''.join( list( set(list(_acl_a)) ) )
-        _acl_d = ''.join( list( set(list(all_permission)) - set(list(_acl_a)) ) )
+        _ace_a = ''.join( list( set(list(_ace_a)) ) )
+        _ace_d = ''.join( list( set(list(all_permission)) - set(list(_ace_a)) ) )
 
-        acl['A'] = _acl_a
-        acl['D'] = _acl_d
+        ace['A'] = _ace_a
+        ace['D'] = _ace_d
 
     except KeyError,e:
         logger.error('No such role: %s' % role)
 
-    return acl
+    return ace
 
 def getRoleFromACE(ace, lvl=0):
     ''' converts ACE permission into the defined roles: admin, user, contributor

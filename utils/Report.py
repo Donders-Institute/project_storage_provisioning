@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 import os
-from utils.ACL    import ROLE_ACL
+from utils.ACL    import ROLE_PERMISSION
 
 ## loading PrettyTable for table output 
 from prettytable import PrettyTable
@@ -9,7 +9,7 @@ from prettytable import PrettyTable
 def printRoleTable(roles):
     ''' display project roles in prettytable
     '''
-    r_keys = ROLE_ACL.keys()
+    r_keys = ROLE_PERMISSION.keys()
 
     t = PrettyTable()
     t.field_names = ['project'] + r_keys

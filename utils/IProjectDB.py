@@ -2,10 +2,10 @@
 import sys
 import getpass 
 import os
-from utils.ACL    import ROLE_ACL
+from utils.ACL    import ROLE_PERMISSION
 from utils.Common import getMyLogger
 
-class Action:
+class ProjectRoleSettingAction:
     '''object containing attribute for the project access control setup action'''
     def __init__(self, **kwargs):
         self.uid    = None
@@ -25,7 +25,7 @@ class Action:
 
     def __cmp__(self,other):
         '''compare actions by creation time'''
-        if not isinstance(other, Action):
+        if not isinstance(other, ProjectRoleSettingAction):
             raise NotImplementedError
         return cmp(self.ctime, other.ctime)
 
@@ -34,7 +34,7 @@ class Action:
            when identical action is found, confliction is resolved
            by taking into account the action with later creation time.
         '''
-        if not isinstance(other, Action):
+        if not isinstance(other, ProjectRoleSettingAction):
             raise NotImplementedError
         return self.uid == other.uid and self.pid == other.pid
 
@@ -176,7 +176,7 @@ def getProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, lvl=0):
                 crs.execute(qry)
 
                 for (uid,pid,role,created,action,pquota) in crs:
-                    _a_new = Action( uid=uid, pid=pid, role=role, action=action, ctime=created, pquota=pquota )
+                    _a_new = ProjectRoleSettingAction( uid=uid, pid=pid, role=role, action=action, ctime=created, pquota=pquota )
                     if actions.count(_a_new) > 0:
                         ## when an action on same uid,pid is found,
                         ## check the action's ctime and take the latest created one
