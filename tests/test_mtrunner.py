@@ -3,7 +3,7 @@ import sys
 import os 
 import time
 from random import random
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../external/lib/python')
 from clint.textui import progress
 from MTRunner import MTRunner, Algorithm, Data
 
