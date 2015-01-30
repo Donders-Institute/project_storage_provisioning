@@ -57,6 +57,12 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
 
     logger = getMyLogger(lvl=lvl)
 
+    def __exec_filer_cmd_ssh__(filer_admin, filer_mgmt_server, cmd, timeout=300, shell=None, lvl=0):
+        '''private function for executing filer command via SSH interface'''
+        if not shell:
+            shell = Shell()
+        return shell.cmd1('ssh %s@%s "%s"' % (filer_admin, filer_mgmt_server, cmd), allowed_exit=[0,255], timeout=timeout)
+
     quotaGB = __getSizeInGB__(quota)
 
     if os.path.exists(fpath):
@@ -65,14 +71,13 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
     else:
         s = Shell()
 
-        ## 1. finding up aggregate information
-        cmd = 'ssh %s@%s "storage aggregate show -fields availsize,volcount -stat online"' % (filer_admin, filer_mgmt_server)
-
+        ## 1. finding a proper aggregate for allocating storage space for the volume
+        cmd = 'storage aggregate show -fields availsize,volcount -stat online'
         logger.debug('cmd listing aggregates: %s' % cmd)
-
-        rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=120)
+        rc, output, m = __exec_filer_cmd_ssh__(filer_admin, filer_mgmt_server, cmd, timeout=120, shell=s, lvl=lvl)
         if rc != 0:
             logger.error('%s failed' % cmd)
+            logger.error(output)
             return False
 
         ## parsing the line similar to the following one: 
@@ -102,17 +107,38 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
         ## 2. create volume
         vol_name = 'project_%s' % fpath.split('/')[-1].replace('.','_')
    
-        cmd = 'ssh %s@%s "volume create -vserver atreides -volume %s -aggregate %s -size %s -user %s -group %s -junction-path %s -security-style unix -unix-permissions 0550 -autosize false -foreground true"' % (filer_admin, filer_mgmt_server, vol_name, g_aggr['name'], quota, ouid, ogid, fpath)
+        cmd  = 'volume create -vserver atreides -volume %s -aggregate %s -size %s -user %s -group %s -junction-path %s' % (vol_name, g_aggr['name'], quota, ouid, ogid, fpath)
+        cmd += ' -security-style unix -unix-permissions 0550 -state online -autosize false -foreground true'
+        cmd += ' -policy dccn-nfs -space-guarantee none -snapshot-policy none -type RW -antivirus-on-access-policy default'
+        cmd += ' -percent-snapshot-space 0'
 
         logger.debug('cmd creating volume: %s' % cmd)
 
-        rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=300)
+        rc,output,m = __exec_filer_cmd_ssh__(filer_admin, filer_mgmt_server, cmd, shell=s, lvl=lvl)
         if rc != 0:
             logger.error('%s failed' % cmd)
             logger.error('%s' % output)
             return False
-        else:
-            return True
+
+        ## 3. enable volume efficiency
+        cmd = 'volume efficiency on -vserver atreides -volume %s' % vol_name
+        logger.debug('cmd enabling volume efficiency: %s' % cmd)
+        rc,output,m = __exec_filer_cmd_ssh__(filer_admin, filer_mgmt_server, cmd, shell=s, lvl=lvl)
+        if rc != 0:
+            logger.error('%s failed' % cmd)
+            logger.error('%s' % output)
+            return False
+
+        ## 4. modify volume efficiency
+        cmd = 'volume efficiency modify -schedule auto -volume %s' % vol_name
+        logger.debug('cmd setting volume efficiency: %s' % cmd)
+        rc,output,m = __exec_filer_cmd_ssh__(filer_admin, filer_mgmt_server, cmd, shell=s, lvl=lvl)
+        if rc != 0:
+            logger.error('%s failed' % cmd)
+            logger.error('%s' % output)
+            return False
+
+        return True
   
 def __getSizeInGB__(size):
     '''convert size string to numerical size in GB'''
