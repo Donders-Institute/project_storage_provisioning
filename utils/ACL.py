@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-import logging
 import pickle
 import pprint
+
 from utils.Shell  import *
 from utils.Common import getMyLogger, getClientInfo
+
 
 ROLE_ADMIN       = 'admin'
 ROLE_CONTRIBUTOR = 'contributor'

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import sys
-import getpass 
-import os
-from utils.ACL    import ROLE_PERMISSION
+import getpass
+import pprint
+
 from utils.Common import getMyLogger
 
 class ProjectRoleSettingAction:

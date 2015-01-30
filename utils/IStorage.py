@@ -1,14 +1,8 @@
 #!/usr/bin/env python
-import sys
-import getpass
-import os
-import stat
-import pwd
-import grp 
-import re 
-import operator 
-from utils.Common import getMyLogger
-from utils.Shell  import *
+import grp
+import operator
+
+from utils.Shell import *
 
 StorageType = {'fs_dir':0, 'netapp_volume':1}
 

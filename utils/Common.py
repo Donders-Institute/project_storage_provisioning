@@ -1,12 +1,11 @@
-#/usr/bin/env python
-
-import os 
+#!/usr/bin/env python
+import os
 import logging
 import inspect
 import time
-import datetime 
-import re 
-import math 
+import datetime
+import re
+import math
 import locale
 import ConfigParser
 import StringIO
@@ -43,16 +42,16 @@ def getConfig(config_file='config.ini'):
     default_cfg = {
         # Project base dir arrangement
         'PROJECT_BASEDIR'  : '/project' ,
-        'PROJECT_DIR_OUID' : 'project'  , 
+        'PROJECT_DIR_OUID' : 'project'  ,
         'PROJECT_DIR_OGID' : 'project_g',
         # NetApp filer management interface
         'FILER_ADMIN'      : '',
-        'FILER_MGMT_SERVER': '', 
+        'FILER_MGMT_SERVER': '',
         # Project database interface
-        'PDB_USER'         : '', 
+        'PDB_USER'         : '',
         'PDB_PASSWORD'     : '',
         'PDB_HOST'         : '',
-        'PDB_DATABASE'     : '' 
+        'PDB_DATABASE'     : ''
     }
 
     config = ConfigParser.SafeConfigParser(default_cfg)
@@ -112,7 +111,7 @@ def getMyLogger(name=None, lvl=0):
         ## add logger handlers
         _s_hdl = logging.StreamHandler()
         _s_hdl.setFormatter(lc_formatter)
- 
+
         _logger.addHandler(_s_hdl)
 
         loggers[name] = _logger
@@ -145,7 +144,7 @@ def getTimeInvolvement(mode='year', tdelta='7d', tstart=datetime.datetime.now())
          - ['20140101','20140102'] if mode is 'day' and the time range involves 1 Jan. and 2 Jan. of 2014
     '''
 
-    re_td = re.compile('^([\-,\+]?[0-9\.]+)\s?(y|Y|m|M|d|D){0,1}$')  ## only recognize certain pattern of tdelta argument 
+    re_td = re.compile('^([\-,\+]?[0-9\.]+)\s?(y|Y|m|M|d|D){0,1}$')  ## only recognize certain pattern of tdelta argument
 
     ## default is 7 days in difference
     t_diff = 7
@@ -162,15 +161,15 @@ def getTimeInvolvement(mode='year', tdelta='7d', tstart=datetime.datetime.now())
     if t_unit in ['y','Y']:
         t_diff = t_diff*365
     elif t_unit in ['m','M']:
-        t_diff = t_diff*30 
+        t_diff = t_diff*30
     else:
         pass
 
     r_beg = int(math.floor(t_diff))
     r_end = 0
     if t_diff > 0:
-        r_beg = 1 
-        r_end = int(math.ceil(t_diff)) + 1 
+        r_beg = 1
+        r_end = int(math.ceil(t_diff)) + 1
 
     ts_digits = {'year':4, 'month':6, 'day':8}
 
@@ -230,7 +229,7 @@ def makeStructTimeUTC(value):
 def fmtStructTimeUTC(stime):
     '''
     Format given struct time in to human readable string
-    ''' 
+    '''
     return time.strftime('%a %b %d %H:%M:%S %Y',stime)
 
 #def getMySQLConnector(uid,passwd,db):
