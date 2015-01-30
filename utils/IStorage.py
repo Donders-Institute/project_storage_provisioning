@@ -130,7 +130,7 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
             return False
 
         ## 4. modify volume efficiency
-        cmd = 'volume efficiency modify -schedule auto -volume %s' % vol_name
+        cmd = 'volume efficiency modify -schedule auto -vserver atreides -volume %s' % vol_name
         logger.debug('cmd setting volume efficiency: %s' % cmd)
         rc,output,m = __exec_filer_cmd_ssh__(filer_admin, filer_mgmt_server, cmd, shell=s, lvl=lvl)
         if rc != 0:
