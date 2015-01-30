@@ -130,14 +130,14 @@ if __name__ == "__main__":
 
         ## perform del ACL action
         logger.info('  |- performing del ACL on project: %s' % pid)
-        _del_a = filter(lambda x:x.action=='del' , p_actions)
+        _del_a = filter(lambda x:x.action=='delete' , p_actions)
         _l_user= map(lambda x:x.uid, _del_a)
+
+        logger.info('  |- del user(s): %s' % repr(_l_user))
 
         rc = True
         if not args.do_test:
             rc = delACE(p_dir, _l_user, force=args.force, lvl=args.verbose)
-        else:
-            logger.info('  |- del user(s): %s'        % repr(_l_user))
 
         if rc:
             for a in _del_a:
