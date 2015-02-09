@@ -6,8 +6,8 @@ from argparse import ArgumentParser
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils.ACL    import getACE, setACE, delACE, getRoleFromACE, ROLE_PERMISSION
-from utils.Common import getConfig, getMyLogger, csvArgsToList
+from utils.ACL    import getACE, getRoleFromACE, ROLE_PERMISSION
+from utils.Common import getConfig, getMyLogger
 from utils.Report import printRoleTable
 from utils.IProjectDB import getDBConnectInfo,updateProjectDatabase
 
@@ -40,11 +40,11 @@ if __name__ == "__main__":
                       default = cfg.get('PPS','PROJECT_BASEDIR'),
                       help    = 'set the basedir in which the project storages are located')
 
-    parg.add_argument('-u','--updatedb',
-                      action  = 'store_true',
-                      dest    = 'updatedb',
-                      default = False,
-                      help    = 'update project database')
+    # parg.add_argument('-u','--updatedb',
+    #                   action  = 'store_true',
+    #                   dest    = 'updatedb',
+    #                   default = False,
+    #                   help    = 'update project database')
 
     args = parg.parse_args()
 
@@ -79,6 +79,6 @@ if __name__ == "__main__":
     ## printing or updating project DB database
     printRoleTable(roles)
 
-    if args.updatedb:
-        (db_host, db_uid, db_name, db_pass) = getDBConnectInfo(cfg)
-        updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)
+    # if args.updatedb:
+    #     (db_host, db_uid, db_name, db_pass) = getDBConnectInfo(cfg)
+    #     updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)
