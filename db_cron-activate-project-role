@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
                 if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
                     r = getRoleFromACE(permission, lvl=args.verbose)
-                    roles[id][r].append(u)
+                    roles[pid][r].append(u)
 
         ## updating project DB database with the currently activated user roles
         updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)
