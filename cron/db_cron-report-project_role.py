@@ -1,10 +1,10 @@
 #!/bin/env python
 import sys
-import os 
+import os
 from argparse import ArgumentParser
 
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, getRoleFromACE, ROLE_PERMISSION
 from utils.Common import getConfig, getMyLogger
@@ -62,13 +62,14 @@ if __name__ == "__main__":
         if aces[p]:
             for tp,flag,principle,permission in aces[p]:
 
-                ## exclude the default principles 
+                ## exclude the default principles
                 u = principle.split('@')[0]
- 
+
                 if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
                     r = getRoleFromACE(permission, lvl=args.verbose)
                     roles[id][r].append(u)
                     logger.debug('user %s: permission %s, role %s' % (u, permission,r))
 
-    ## printing or updating project DB database
-    printRoleTable(roles)
+    # updating database
+    (db_host, db_uid, db_name, db_pass) = getDBConnectInfo(cfg)
+    updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)
