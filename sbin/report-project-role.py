@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../external/lib/python')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/..')
 from utils.ACL    import getACE, getRoleFromACE, ROLE_PERMISSION
 from utils.Common import getConfig, getMyLogger
 from utils.Report import printRoleTable
@@ -15,7 +15,7 @@ from utils.IProjectDB import getDBConnectInfo,updateProjectDatabase
 if __name__ == "__main__":
 
     ## load configuration file
-    cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/etc/config.ini' )
+    cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/../etc/config.ini' )
 
     parg = ArgumentParser(description='gets access rights of project storages', version="0.1")
 

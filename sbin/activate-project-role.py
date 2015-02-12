@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../external/lib/python')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../')
 from utils.ACL import setACE, delACE, ROLE_PERMISSION, getACE, getRoleFromACE
 from utils.Common import getConfig, getMyLogger
 from utils.IStorage import StorageType, createProjectDirectory
@@ -16,7 +16,7 @@ from utils.IProjectDB import getDBConnectInfo, setProjectRoleConfigActions, getP
 if __name__ == "__main__":
 
     ## load configuration file
-    cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/etc/config.ini' )
+    cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/../etc/config.ini' )
 
     parg = ArgumentParser(description='activates project roles settings pending in the ProjectDB', version="0.1")
 
