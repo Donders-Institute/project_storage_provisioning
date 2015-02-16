@@ -4,6 +4,8 @@ import os
 from argparse import ArgumentParser
 
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
+import re
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, getRoleFromACE, ROLE_PERMISSION
@@ -58,7 +60,8 @@ if __name__ == "__main__":
         p = os.path.join(args.basedir, id)
 
         if args.subdir:
-            p = os.path.join(p, args.subdir)
+            # if args.basedir has leading ppath, substitute it with empty string
+            p = os.path.join(p, re.sub(r'^%s/' % p, '', args.subdir))
 
         ## create empty role dict for the project
         roles[id] = {}

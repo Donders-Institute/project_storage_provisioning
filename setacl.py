@@ -4,6 +4,8 @@ import os
 from argparse import ArgumentParser
 
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
+import re
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import setACE
@@ -123,7 +125,8 @@ if __name__ == "__main__":
         fpath = ppath
 
         if args.subdir:
-            fpath = os.path.join(ppath, args.subdir)
+            # if args.basedir has leading ppath, substitute it with empty string
+            fpath = os.path.join(ppath, re.sub(r'^%s/' % ppath, '', args.subdir))
 
         if os.path.exists(fpath):
             logger.info('setting file or directory: %s' % fpath)
