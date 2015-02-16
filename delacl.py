@@ -51,11 +51,11 @@ if __name__ == "__main__":
                       default = cfg.get('PPS','PROJECT_BASEDIR'),
                       help    = 'set the basedir in which the project storages are located (default: %(default)s)')
 
-    parg.add_argument('-p','--subdir',
+    parg.add_argument('-p','--path',
                       action  = 'store',
                       dest    = 'subdir',
                       default = '',
-                      help    = 'specify the sub-directory in the project to which the role setting is applied')
+                      help    = 'specify the relative/absolute path to a sub-directory to which the role setting is applied')
 
     args = parg.parse_args()
 

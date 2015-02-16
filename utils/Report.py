@@ -12,12 +12,12 @@ def printRoleTable(roles):
     r_keys = ROLE_PERMISSION.keys()
 
     t = PrettyTable()
-    t.field_names = ['project', 'subdir'] + r_keys
+    t.field_names = ['project', 'path'] + r_keys
 
     for p,r in roles.iteritems():
         data = []
         data.append(p)
-        data.append(r['subdir'])
+        data.append(r['path'])
         for k in r_keys:
             if r[k]:
                 data.append(','.join(r[k]))
