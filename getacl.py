@@ -40,6 +40,12 @@ if __name__ == "__main__":
                       default = cfg.get('PPS','PROJECT_BASEDIR'),
                       help    = 'set the basedir in which the project storages are located')
 
+    parg.add_argument('-p','--subdir',
+                      action  = 'store',
+                      dest    = 'subdir',
+                      default = '',
+                      help    = 'specify the sub-directory in the project from which the role setting is retrieved')
+
     args = parg.parse_args()
 
     logger = getMyLogger(name=__file__, lvl=args.verbose)
@@ -50,6 +56,9 @@ if __name__ == "__main__":
     roles = {}
     for id in args.pid:
         p = os.path.join(args.basedir, id)
+
+        if args.subdir:
+            p = os.path.join(p, args.subdir)
 
         ## create empty role dict for the project
         roles[id] = {}

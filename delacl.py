@@ -49,7 +49,24 @@ if __name__ == "__main__":
                       default = cfg.get('PPS','PROJECT_BASEDIR'),
                       help    = 'set the basedir in which the project storages are located (default: %(default)s)')
 
+    parg.add_argument('-p','--subdir',
+                      action  = 'store',
+                      dest    = 'subdir',
+                      default = '',
+                      help    = 'specify the sub-directory in the project to which the role setting is applied')
+
     args = parg.parse_args()
+
+    logger = getMyLogger(name=__file__, lvl=args.verbose)
+
+    # check if setting ACL on subdirectories is supported for the projects in question
+    if args.subdir:
+        subdir_enabled = cfg.get('PPS', 'PRJ_SUBDIR_ENABLED').split(',')
+        for id in args.pid:
+            if id not in subdir_enabled:
+                logger.error('Setting ACL on subdirecty not allowed: %s' % id)
+                # TODO: consolidate the exit codes
+                sys.exit(1)
 
     _l_user = csvArgsToList(args.ulist[0].strip())
 
@@ -60,10 +77,13 @@ if __name__ == "__main__":
     except ValueError, e:
         pass
 
-    logger = getMyLogger(name=__file__, lvl=args.verbose)
-
     for id in args.pid:
-        p = os.path.join(args.basedir, id)
-        if os.path.exists(p):
-            if not delACE(p, _l_user, force=args.force, lvl=args.verbose):
+        ppath = os.path.join(args.basedir, id)
+        fpath = ppath
+
+        if args.subdir:
+            fpath = os.path.join(ppath, args.subdir)
+
+        if os.path.exists(fpath):
+            if not delACE(fpath, '', _l_user, force=args.force, lvl=args.verbose):
                 logger.error('fail to remove %s from project %s.' % (','.join(_l_user), id))

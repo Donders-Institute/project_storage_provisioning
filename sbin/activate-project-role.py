@@ -121,7 +121,10 @@ if __name__ == "__main__":
 
         rc = True
         if not args.do_test:
-            rc = setACE(p_dir, admins=_l_admin, users=_l_user, contributors=_l_contrib, force=args.force, lvl=args.verbose)
+            # while initializing the project's ACL, there is no need to set ACL for sub-directories.
+            # therefore, the first two arguments of setACE are the same and equal to the project's top directory.
+            rc = setACE(p_dir, p_dir, users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force,
+                        lvl=args.verbose)
 
         if rc:
             for a in _set_a:
@@ -136,7 +139,9 @@ if __name__ == "__main__":
 
         rc = True
         if not args.do_test:
-            rc = delACE(p_dir, _l_user, force=args.force, lvl=args.verbose)
+            # while initializing the project's ACL, there is no need to set ACL for sub-directories.
+            # therefore, the first two arguments of delACE are the same and equal to the project's top directory.
+            rc = delACE(p_dir, p_dir, _l_user, force=args.force, lvl=args.verbose)
 
         if rc:
             for a in _del_a:

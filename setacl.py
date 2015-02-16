@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils.ACL    import getACE, setACE, delACE
+from utils.ACL    import setACE
 from utils.Common import getConfig, getMyLogger, csvArgsToList
 
 ## execute the main program
@@ -62,6 +62,12 @@ if __name__ == "__main__":
                       default = cfg.get('PPS','PROJECT_BASEDIR'),
                       help    = 'set the basedir in which the project storages are located')
 
+    parg.add_argument('-p','--subdir',
+                      action  = 'store',
+                      dest    = 'subdir',
+                      default = '',
+                      help    = 'specify the sub-directory in the project to which the role setting is applied')
+
 #    parg.add_argument('-n','--new',
 #                      action  = 'store_true',
 #                      dest    = 'do_create',
@@ -72,18 +78,27 @@ if __name__ == "__main__":
 
     logger = getMyLogger(name=__file__, lvl=args.verbose)
 
+    # check if setting ACL on subdirectories is supported for the projects in question
+    if args.subdir:
+        subdir_enabled = cfg.get('PPS', 'PRJ_SUBDIR_ENABLED').split(',')
+        for id in args.pid:
+            if id not in subdir_enabled:
+                logger.error('Setting ACL on subdirecty not allowed: %s' % id)
+                # TODO: consolidate the exit codes
+                sys.exit(1)
+
     args.admins        = args.admins.strip()
     args.users         = args.users.strip()
     args.contributors  = args.contributors.strip()
 
-    _l_admin    = csvArgsToList(args.admins) 
-    _l_user     = csvArgsToList(args.users) 
-    _l_contrib  = csvArgsToList(args.contributors) 
+    _l_admin    = csvArgsToList(args.admins)
+    _l_user     = csvArgsToList(args.users)
+    _l_contrib  = csvArgsToList(args.contributors)
 
     ## there is no reason to set yourself for admin, user, contributor
     ## since the you should have been the admin to run this program
     ## and admin has all the rights.
-    ##  
+    ##
     ## if there is a need to change (downgrade) your permission, use
     ## the super user via sudo to run this program.
     me = os.environ['LOGNAME']
@@ -104,14 +119,14 @@ if __name__ == "__main__":
 
     for id in args.pid:
 
-        p = os.path.join(args.basedir, id)
+        ppath = os.path.join(args.basedir, id)
+        fpath = ppath
 
-#        if not os.path.exists(p) and args.do_create:
-#            os.mkdir(p)
-#            ## TODO: set project folder to proper ownership, e.g. project:project_g
+        if args.subdir:
+            fpath = os.path.join(ppath, args.subdir)
 
-        if os.path.exists(p):
-            logger.info('setting file or directory: %s' % p)
-            setACE(p, admins=_l_admin, users=_l_user, contributors=_l_contrib, force=args.force, lvl=args.verbose)
+        if os.path.exists(fpath):
+            logger.info('setting file or directory: %s' % fpath)
+            setACE(fpath, ppath, users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force, lvl=args.verbose)
         else:
-            logger.error('file or directory not found: %s' % p)
+            logger.error('file or directory not found: %s' % fpath)

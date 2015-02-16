@@ -105,15 +105,15 @@ def getRoleFromACE(ace, lvl=0):
     ## find the closest match, i.e. shortest string on the value of the diff dict
     return sorted(diff.items(), key=lambda x:len(x[1]))[0][0]
 
-def delACE(path, users, force=False, lvl=0):
+def delACE(fpath, ppath, users, force=False, lvl=0):
     ''' deletes all ACEs related to the given list of users.
-         - force: update the ACL anyway even the given user is not in ACL. 
+         - force: update the ACL anyway even the given user is not in ACL.
     '''
 
     logger = getMyLogger(lvl=lvl)
 
     ## get the existing ACL
-    o_aces = getACE(path, recursive=False, lvl=lvl)[path]
+    o_aces = getACE(fpath, recursive=False, lvl=lvl)[fpath]
 
     if not force:
         ## check users in existing ACL to avoid redundant operations
@@ -147,13 +147,28 @@ def delACE(path, users, force=False, lvl=0):
 
     _opts = ['-R','-s']
 
-    return __nfs4_setfacl__(path, n_aces, _opts, lvl=lvl)
+    return __nfs4_setfacl__(fpath, ppath, n_aces, _opts, lvl=lvl)
 
 def getACE(path, user=None, recursive=False, lvl=0):
     ''' gets ACEs for given user or for all ACEs if user is not given. 
     '''
 
     logger = getMyLogger(lvl=lvl)
+
+    def __fs_walk_error__(err):
+        ''' handles error if not able to perform listdir on a file.
+        '''
+        print 'cannot list file: %s' % err.filename
+
+    def __parseACLStr__(acl_str):
+        ''' splits ACL into ACEs and parse each ACEs into a tuple of (type,flag,principle,permission)
+        '''
+        acl = []
+        for ace in acl_str.split('\n'):
+            if ace:
+                acl.append(ace.split(':'))
+
+        return acl
 
     def __nfs4_getfacl__(fpath):
 
@@ -170,7 +185,7 @@ def getACE(path, user=None, recursive=False, lvl=0):
             return None
         else:
             return __parseACLStr__(output)
-        
+
     acl = {}
     s   = Shell()
     if recursive:
@@ -187,30 +202,30 @@ def getACE(path, user=None, recursive=False, lvl=0):
 
     return acl
 
-def setDefaultPrincipleACE(path, lvl=0):
-    ''' sets initial / default ACEs for default principles: USER, GROUP and EVERYONE
-    '''
-    logger = getMyLogger(lvl=lvl)
+# def setDefaultPrincipleACE(path, lvl=0):
+#     ''' sets initial / default ACEs for default principles: USER, GROUP and EVERYONE
+#     '''
+#     logger = getMyLogger(lvl=lvl)
+#
+#     ## get the existing ACL
+#     aces = getACE(path, recursive=False, lvl=lvl)[path]
+#
+#     ## compose new ACL based on the existing ACL
+#     n_aces = []
+#     for a in aces:
+#         u = a[2].split('@')[0]
+#         if u in ['GROUP','OWNER','EVERYONE']:
+#             ## to make it general: remove 'f' and 'd' bits and re-prepend them again
+#             a[1] = 'fd%s' % a[1].replace('f','').replace('d','')
+#
+#         n_aces.append(':'.join(a))
+#
+#     opts  = ['-R', '-s']
+#     return __nfs4_setfacl__(path, '', n_aces, opts, lvl=lvl)
 
-    ## get the existing ACL
-    aces = getACE(path, recursive=False, lvl=lvl)[path]
-
-    ## compose new ACL based on the existing ACL
-    n_aces = []
-    for a in aces:
-        u = a[2].split('@')[0]
-        if u in ['GROUP','OWNER','EVERYONE']:
-            ## to make it general: remove 'f' and 'd' bits and re-prepend them again
-            a[1] = 'fd%s' % a[1].replace('f','').replace('d','')
-
-        n_aces.append(':'.join(a))
-
-    opts  = ['-R', '-s']
-    return __nfs4_setfacl__(path, n_aces, opts, lvl=lvl)
-
-def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
+def setACE(fpath, ppath, users=[], contributors=[], admins=[], force=False, lvl=0):
     ''' adds/sets ACEs for user, contributor and admin roles.
-         - force: update the ACL anyway even the given user is already in the role. 
+         - force: update the ACL anyway even the given user is already in the role.
     '''
 
     logger = getMyLogger(lvl=lvl)
@@ -228,7 +243,7 @@ def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
              ROLE_USER       : users} 
 
     ## get the existing ACL
-    o_aces = getACE(path, recursive=False, lvl=lvl)[path]
+    o_aces = getACE(fpath, recursive=False, lvl=lvl)[fpath]
 
     if not force:
         ## check user roles in existing ACL to avoid redundant operations 
@@ -265,7 +280,7 @@ def setACE(path, users=[], contributors=[], admins=[], force=False, lvl=0):
             ## Do not need to set the DENY ACE's
             #n_aces.insert(0, 'D:fd:%s@dccn.nl:%s' % (u, _perm['D']))
 
-    return __nfs4_setfacl__(path, n_aces, opts, lvl=lvl)
+    return __nfs4_setfacl__(fpath, ppath, n_aces, opts, lvl=lvl)
 
 ## internal functions
 def __curateACE__(aces, lvl=0):
@@ -292,11 +307,12 @@ def __curateACE__(aces, lvl=0):
 
     return n_aces
 
-def __nfs4_setfacl__(fpath, aces, options=None, lvl=0):
+def __nfs4_setfacl__(fpath, ppath, aces, options=None, lvl=0):
     ''' wrapper for calling nfs4_setfacl command.
          - fpath  : the path the ACEs will be applied
+         - ppath  : the path of the project's top-level directory
          - aces   : the ACEs in a list of strings
-         - options: the command-line options in a list of strings 
+         - options: the command-line options in a list of strings
     '''
     logger = getMyLogger(lvl=lvl)
 
@@ -315,8 +331,9 @@ def __nfs4_setfacl__(fpath, aces, options=None, lvl=0):
     if fpath[-1] is not '/':
         fpath += '/'
 
-    ## check existance of the .setacl_lock file within the fpath
-    lock_fpath = os.path.join( fpath, '.setacl_lock' )
+    # check existance of the .setacl_lock file within the ppath
+    # The lock should always be in the project's top directory
+    lock_fpath = os.path.join( ppath, '.setacl_lock' )
     if os.path.exists( lock_fpath ):
         logger.error('cannot setacl as lock file \'%s\' has been acquired by other process' % lock_fpath)
         return False
@@ -341,18 +358,3 @@ def __nfs4_setfacl__(fpath, aces, options=None, lvl=0):
         pass
 
     return not rc
-   
-def __fs_walk_error__(err):
-    ''' handles error if not able to perform listdir on a file.
-    '''
-    print 'cannot list file: %s' % err.filename
-
-def __parseACLStr__(acl_str):
-    ''' splits ACL into ACEs and parse each ACEs into a tuple of (type,flag,principle,permission) 
-    '''
-    acl = [] 
-    for ace in acl_str.split('\n'):
-        if ace:
-            acl.append(ace.split(':'))
-
-    return acl
