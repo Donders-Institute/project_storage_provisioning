@@ -59,12 +59,16 @@ if __name__ == "__main__":
     for id in args.pid:
         p = os.path.join(args.basedir, id)
 
-        if args.subdir:
-            # if args.basedir has leading ppath, substitute it with empty string
-            p = os.path.join(p, re.sub(r'^%s/' % p, '', args.subdir))
-
         ## create empty role dict for the project
         roles[id] = {}
+        roles[id]['subdir'] = '.'
+
+        if args.subdir:
+            # if args.basedir has leading ppath, substitute it with empty string
+            rel_subdir = re.sub(r'^%s/' % p, '', args.subdir)
+            p = os.path.join(p, rel_subdir)
+            roles[id]['subdir'] = rel_subdir
+
         for r in ROLE_PERMISSION.keys():
             roles[id][r] = []
 
