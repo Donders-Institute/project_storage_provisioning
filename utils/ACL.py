@@ -175,7 +175,7 @@ def getACE(path, user=None, recursive=False, lvl=0):
         logger.debug('get ACL of %s ...' % fpath)
 
         ## workaround for NetApp for the path is actually the root of the volume
-        if fpath[-1] is not '/':
+        if os.path.isdir(fpath) and fpath[-1] is not '/':
             fpath += '/'
 
         cmd = 'nfs4_getfacl %s' % fpath 
