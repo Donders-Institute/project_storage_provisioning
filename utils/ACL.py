@@ -328,7 +328,7 @@ def __nfs4_setfacl__(fpath, ppath, aces, options=None, lvl=0):
         cmd = 'nfs4_setfacl '
 
     ## workaround for NetApp for the path is actually the root of the volume
-    if fpath[-1] is not '/':
+    if os.path.isdir(fpath) and fpath[-1] is not '/':
         fpath += '/'
 
     # check existance of the .setacl_lock file within the ppath
