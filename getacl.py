@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     args = parg.parse_args()
 
-    logger = getMyLogger(name=__file__, lvl=args.verbose)
+    logger = getMyLogger(name=os.path.basename(__file__), lvl=args.verbose)
 
     if not args.pid:
         args.pid = os.listdir(args.basedir)

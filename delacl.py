@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     args = parg.parse_args()
 
-    logger = getMyLogger(name=__file__, lvl=args.verbose)
+    logger = getMyLogger(name=os.path.basename(__file__), lvl=args.verbose)
 
     # check if setting ACL on subdirectories is supported for the projects in question
     if args.subdir:

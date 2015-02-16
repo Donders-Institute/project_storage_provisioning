@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     args = parg.parse_args()
 
-    logger = getMyLogger(name=__file__, lvl=args.verbose)
+    logger = getMyLogger(name=os.path.basename(__file__), lvl=args.verbose)
 
     ## project database connection information
     (db_host, db_uid, db_name, db_pass) = getDBConnectInfo(cfg)
