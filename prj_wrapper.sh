@@ -16,7 +16,7 @@ fi
 
 source $DCCN_MOD_DIR/share/common.sh
 
-myexec=`get_script_dir`/$(echo $me | sed 's/prj_//').py
+myexec=$(echo $me | sed 's/prj_//').py
 
 ## run the executable passing command-line arguments
 $myexec $@
