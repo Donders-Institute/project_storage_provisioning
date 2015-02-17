@@ -1,6 +1,6 @@
-# Managing accessing permission of sharing project data
+# Managing access permission of project data
 
-At DCCN, researches are organised as projects. Data related to the project is centrally organized in a directory (a.k.a. the project directory) on the central storage.  The path to the project directory adopts the naming convention:
+At DCCN, researches are organised as projects. Data related to the project is centrally organized in a so-called _project directory_ on the central storage.  The path to the project directory adopts the naming convention:
 
 ```bash
 /projects/<the_project_id>
@@ -8,7 +8,7 @@ At DCCN, researches are organised as projects. Data related to the project is ce
 
 For example, a project with id `3010000.01` has its project directory `/project/3010000.01`.
 
-Sharing of data within the project directory is controlled by the role-based mechanism implemented on top of the [__NFSv4 Access Control List__](http://www.citi.umich.edu/projects/nfsv4/linux/using-acls.html) technology.
+Data sharing within the project directory is controlled by a role-based mechanism implemented around the [__NFSv4 Access Control List__](http://www.citi.umich.edu/projects/nfsv4/linux/using-acls.html) technology.
 
 ## User roles
 
@@ -18,7 +18,9 @@ Users should be aware of the following three __roles__ defined for the access co
 | ----------------|---------------------------------------------------|
 | _User_          | users in this role has read-only permission.      |
 | _Contributor_   | users in this role has read and write permission. |
-| _Administrator_ | users in this role has read, write permission and the control of access right of other users.|
+| _Administrator_ | users in this role has read, write permission and rights to grant/revoke roles of other users.|
+
+Any user who wants to access data in a project directory must acquire one of the roles on the project. Users in the _Administrator_ role have rights to grant/revoke user roles. The project owner is the initial and the __de facto__ administrator of the project. 
 
 ## Tools
 
