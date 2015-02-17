@@ -14,13 +14,13 @@ Data sharing within the project directory is controlled by a role-based mechanis
 
 Users should be aware of the following three __roles__ defined for the access control.
 
-| Role            | Access right                                      |
-| ----------------|---------------------------------------------------|
-| _User_          | users in this role has read-only permission.      |
-| _Contributor_   | users in this role has read and write permission. |
-| _Administrator_ | users in this role has read, write permission and rights to grant/revoke roles of other users.|
+| Role              | Access right                                      |
+| ------------------|---------------------------------------------------|
+| __User__          | users in this role has read-only permission.      |
+| __Contributor__   | users in this role has read and write permission. |
+| __Administrator__ | users in this role has read, write permission and rights to grant/revoke roles of other users.|
 
-Any user who wants to access data in a project directory must acquire one of the roles on the project. Users in the _Administrator_ role have rights to grant/revoke user roles. The project owner is the initial and the __de facto__ administrator of the project. 
+Any user who wants to access data in a project directory must acquire one of the roles on the project. Users in the __Administrator__ role have rights to grant/revoke user roles. The project owner is the initial and the _de facto_ administrator of the project. 
 
 ## Tools
 
