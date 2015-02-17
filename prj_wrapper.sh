@@ -14,8 +14,6 @@ if [ $? != 0 ]; then
     module load python
 fi
 
-source $DCCN_MOD_DIR/share/common.sh
-
 myexec=$(echo $me | sed 's/prj_//').py
 
 ## run the executable passing command-line arguments
