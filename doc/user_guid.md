@@ -1,0 +1,80 @@
+# Managing accessing permission of sharing project data
+
+At DCCN, researches are organised as projects. Data related to the project is centrally organized in a directory (a.k.a. the project directory) on the central storage.  The path to the project directory adopts the naming convention:
+
+```bash
+/projects/<the_project_id>
+```
+
+For example, a project with id `3010000.01` has its project directory `/project/3010000.01`.
+
+Sharing of data within the project directory is controlled by the role-based mechanism implemented on top of the [__NFSv4 Access Control List__](http://www.citi.umich.edu/projects/nfsv4/linux/using-acls.html) technology.
+
+## User roles
+
+Users should be aware of the following three __roles__ defined for the access control.
+
+| Role            | Access right                                      |
+| ----------------|---------------------------------------------------|
+| _User_          | users in this role has read-only permission.      |
+| _Contributor_   | users in this role has read and write permission. |
+| _Administrator_ | users in this role has read, write permission and the control of access right of other users.|
+
+## Tools
+
+On the HPC cluster at DCCN, three scripts are prepared for managing the access permissions in terms of user roles.  The usage of them are given below.
+
+### End-user's tool for viewing access permission
+
+For general end-users, a tool called `prj_getacl` is used to show user roles of a given project.  For example, to list the user roles on project `3010000.01`, one does
+
+```Bash
+$ prj_getacl 3010000.01
++------------+---------------------+--------+-------------+--------+
+|  project   |         path        | admin  | contributor |  user  |
++------------+---------------------+--------+-------------+--------+
+| 3010000.01 | /project/3010000.01 | honlee |   rendbru   | edwger |
++------------+---------------------+--------+-------------+--------+
+```
+
+The script support few optional arguments. Some usefule ones are listed in the following table. 
+
+| Option       | Purpose                                                              |
+| -------------|----------------------------------------------------------------------|
+| `-h`         | print the help message and exit                                      |
+| `-l LOGLEVEL`| set the verbosity of the log message in a level between `0` and `3`  |
+| `-p SUBDIR`  | retrieve the access right on a `SUBDIR` within the project directory |
+
+### Administrator's tool for permission control
+
+For the administrator, the tool called `prj_setacl` is used for altering user roles on a given project.  For example, to change the role of user `rendbru` from `Contributor` to `User` on project `3010000.01`.  One does
+
+```Bash
+$ prj_setacl -u rendbru 3010000.01
+```
+
+Similarly, setting `rendbru` back to the `Contributor` role, one does the following command:
+
+```Bash
+$ prj_setacl -c rendbru 3010000.01
+``` 
+
+To promote `rendbru` to the `Administrator` role, one uses the `-a` option then, e.g.
+
+```Bash
+$ prj_setacl -a rendbru 3010000.01
+```
+
+For removing an user's access right from a project, another tool called `prj_delacl` is used.  For example, if we want to remove the access right of `rendbru`, one does
+
+```Bash
+$ prj_delacl rendbru 3010000.01
+```
+
+Although it's still experimental, it is possible to set/delete user role on a sub-directory within the project directory. This can be done with the `-p` option of the `prj_setacl` and `prj_delacl` scripts. For example, alterning user `edwger` from the `User` role to `Contributor` role in the subdirectory `subject_001` within project `3010000.01` can be done as follows:
+
+```Bash
+$ prj_setacl -p subject_001 -c edwger 3010000.01
+```
+
+Note: One should note that changing and deleting user role is always applied recursively.
