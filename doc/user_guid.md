@@ -65,13 +65,14 @@ To promote `rendbru` to the `Administrator` role, one uses the `-a` option then,
 $ prj_setacl -a rendbru 3010000.01
 ```
 
-For removing an user's access right from a project, another tool called `prj_delacl` is used.  For example, if we want to remove the access right of `rendbru`, one does
+For removing an user from accessing a project, another tool called `prj_delacl` is used.  For example, if we want to remove the access right of `rendbru` from project `3010000.01`, one does
 
 ```Bash
 $ prj_delacl rendbru 3010000.01
 ```
 
-Although it's still experimental, it is possible to set/delete user role on a sub-directory within the project directory. This can be done with the `-p` option of the `prj_setacl` and `prj_delacl` scripts. For example, alterning user `edwger` from the `User` role to `Contributor` role in the subdirectory `subject_001` within project `3010000.01` can be done as follows:
+#### Controlling user role on sub-directories
+Although it's still experimental, it is possible to set/delete user role on sub-directory within a project directory, using the `-p` option of the `prj_setacl` and `prj_delacl` scripts. For example, alterning user `edwger` from the `User` role to `Contributor` role in the subdirectory `subject_001` within project `3010000.01` can be done as follows:
 
 ```Bash
 $ prj_setacl -p subject_001 -c edwger 3010000.01
