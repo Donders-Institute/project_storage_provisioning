@@ -3,7 +3,7 @@
 At DCCN, researches are organised as projects. Data related to the project is centrally organized in a so-called _project directory_ on the central storage.  The path to the project directory adopts the naming convention:
 
 ```bash
-/projects/<the_project_id>
+/project/<the_project_id>
 ```
 
 For example, a project with id `3010000.01` has its project directory `/project/3010000.01`.
