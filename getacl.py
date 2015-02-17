@@ -83,16 +83,16 @@ if __name__ == "__main__":
         roles[id] = []
 
         for pp in plist:
-            r_data = {'path': p}
+            r_data = {'path': pp}
 
             for r in ROLE_PERMISSION.keys():
                 r_data[r] = []
 
             ## get ACL
-            aces = getACE(p, recursive=False, lvl=args.verbose)
+            aces = getACE(pp, recursive=False, lvl=args.verbose)
 
-            if aces[p]:
-                for tp,flag,principle,permission in aces[p]:
+            if aces[pp]:
+                for tp,flag,principle,permission in aces[pp]:
 
                     ## exclude the default principles
                     u = principle.split('@')[0]
