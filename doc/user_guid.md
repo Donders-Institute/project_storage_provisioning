@@ -74,7 +74,7 @@ $ prj_delacl rendbru 3010000.01
 ```
 
 #### Controlling user role on sub-directories
-Although it's still experimental, it is possible to set/delete user role on sub-directory within a project directory, using the `-p` option of the `prj_setacl` and `prj_delacl` scripts. For example, alterning user `edwger` from the `User` role to `Contributor` role in the subdirectory `subject_001` within project `3010000.01` can be done as follows:
+Although it's still experimental, it is possible to set/delete user role on sub-directory within a project directory, using the `-p` option of the `prj_setacl` and `prj_delacl` scripts. For example, changing user `edwger` from the `User` role to `Contributor` role in the subdirectory `subject_001` within project `3010000.01` can be done as follows:
 
 ```Bash
 $ prj_setacl -p subject_001 -c edwger 3010000.01
