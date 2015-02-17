@@ -27,3 +27,26 @@ def printRoleTable(roles):
 
     t.sortby = 'project'
     print t
+
+def printRoleTableMultipath(roles):
+    ''' display project roles in prettytable
+    '''
+    r_keys = ROLE_PERMISSION.keys()
+
+    t = PrettyTable()
+    t.field_names = ['project', 'path'] + r_keys
+
+    for pid,role in roles.iteritems():
+        for r in role:
+            data = []
+            data.append(pid)
+            data.append(r['path'])
+            for k in r_keys:
+                if r[k]:
+                    data.append(','.join(r[k]))
+                else:
+                    data.append('N/A')
+            t.add_row(data)
+
+    t.sortby = 'project'
+    print t

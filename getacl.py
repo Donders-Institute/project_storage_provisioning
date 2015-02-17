@@ -1,6 +1,7 @@
 #!/bin/env python
 import sys
-import os 
+import os
+import glob
 from argparse import ArgumentParser
 
 ## adding PYTHONPATH for access to utility modules and 3rd-party libraries
@@ -10,8 +11,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import getACE, getRoleFromACE, ROLE_PERMISSION
 from utils.Common import getConfig, getMyLogger
-from utils.Report import printRoleTable
-from utils.IProjectDB import getDBConnectInfo,updateProjectDatabase
+from utils.Report import printRoleTableMultipath
 
 ## execute the main program
 if __name__ == "__main__":
@@ -59,35 +59,49 @@ if __name__ == "__main__":
     for id in args.pid:
         p = os.path.join(args.basedir, id)
 
+        plist = []
+
         if args.subdir:
             # if args.basedir has leading ppath, substitute it with empty string
-            p = os.path.join(p, re.sub(r'^%s/' % p, '', args.subdir))
+            # also accpet shell-style wildcard specification
+            wc = os.path.join(p, re.sub(r'^%s/' % p, '', args.subdir))
+            for pp in glob.glob(wc):
+                plist.append(pp)
 
-        if not os.path.exists(p):
-            # if path not found, throw an error and continue with the next project
-            logger.error('path not found: %s' % p)
-            continue
+            if not plist:
+                logger.error('path not found: %s' % wc)
+                continue
+        else:
+            plist.append(p)
+
+        # if not os.path.exists(p):
+        #     # if path not found, throw an error and continue with the next project
+        #     logger.error('path not found: %s' % p)
+        #     continue
 
         ## create empty role dict for the project
-        roles[id] = {}
-        roles[id]['path'] = p
+        roles[id] = []
 
-        for r in ROLE_PERMISSION.keys():
-            roles[id][r] = []
+        for pp in plist:
+            r_data = {'path': p}
 
-        ## get ACL
-        aces = getACE(p, recursive=False, lvl=args.verbose)
+            for r in ROLE_PERMISSION.keys():
+                r_data[r] = []
 
-        if aces[p]:
-            for tp,flag,principle,permission in aces[p]:
+            ## get ACL
+            aces = getACE(p, recursive=False, lvl=args.verbose)
 
-                ## exclude the default principles 
-                u = principle.split('@')[0]
- 
-                if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
-                    r = getRoleFromACE(permission, lvl=args.verbose)
-                    roles[id][r].append(u)
-                    logger.debug('user %s: permission %s, role %s' % (u, permission,r))
+            if aces[p]:
+                for tp,flag,principle,permission in aces[p]:
+
+                    ## exclude the default principles
+                    u = principle.split('@')[0]
+
+                    if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
+                        r = getRoleFromACE(permission, lvl=args.verbose)
+                        r_data[r].append(u)
+                        logger.debug('user %s: permission %s, role %s' % (u, permission,r))
+            roles[id].append(r_data)
 
     ## printing or updating project DB database
-    printRoleTable(roles)
+    printRoleTableMultipath(roles)
