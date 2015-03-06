@@ -88,5 +88,5 @@ if __name__ == "__main__":
             fpath = os.path.join(ppath, re.sub(r'^%s/' % ppath, '', args.subdir))
 
         if os.path.exists(fpath):
-            if not delACE(fpath, '', _l_user, force=args.force, lvl=args.verbose):
+            if not delACE(fpath, ppath, _l_user, force=args.force, lvl=args.verbose):
                 logger.error('fail to remove %s from project %s.' % (','.join(_l_user), id))
