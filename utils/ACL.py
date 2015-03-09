@@ -9,10 +9,12 @@ from utils.Common import getMyLogger, getClientInfo
 ROLE_ADMIN       = 'admin'
 ROLE_CONTRIBUTOR = 'contributor'
 ROLE_USER        = 'user'
+ROLE_TRAVERSE    = 'traverse'
 
 ROLE_PERMISSION  = { ROLE_ADMIN       : 'RXWdDoy',
                      ROLE_CONTRIBUTOR : 'rwaDdxnNtTcy',
-                     ROLE_USER        : 'RXy' }
+                     ROLE_USER        : 'RXy',
+                     ROLE_TRAVERSE    : 'x'}
 
 class ProjectRole:
     '''object for project role'''
@@ -98,7 +100,7 @@ def getRoleFromACE(ace, lvl=0):
     logger = getMyLogger(lvl=lvl)
 
     diff = {}
-    for r in [ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_USER]:
+    for r in [ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_USER, ROLE_TRAVERSE]:
         diff[r] = list( set(list(ace)) ^ set(list( get_permission(r)['A']  )) )
         logger.debug('diff to role %s: %s' % (r, repr(diff[r])))
 
