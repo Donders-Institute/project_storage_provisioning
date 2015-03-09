@@ -130,6 +130,7 @@ if __name__ == "__main__":
 
         if os.path.exists(fpath):
             logger.info('setting file or directory: %s' % fpath)
-            setACE(fpath, ppath, users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force, lvl=args.verbose)
+            setACE(fpath, ppath, users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force,
+                   lvl=args.verbose)
         else:
             logger.error('file or directory not found: %s' % fpath)

@@ -16,6 +16,21 @@ ROLE_PERMISSION  = { ROLE_ADMIN       : 'RXWdDoy',
                      ROLE_USER        : 'RXy',
                      ROLE_TRAVERSE    : 'x'}
 
+class NFS4ACE:
+    '''object for NFSv4 ACE'''
+    def __init__(self, **kwargs):
+        self.type = ''
+        self.flag = ''
+        self.principle = ''
+        self.mask = ''
+        self.__dict__.update(kwargs)
+
+    def __str__(self):
+        return ':'.join([self.type, self.flag, self.principle, self.mask])
+
+    def __repr__(self):
+        return repr(self.__dict__)
+
 class ProjectRole:
     '''object for project role'''
     def __init__(self, **kwargs):
@@ -225,8 +240,29 @@ def getACE(path, user=None, recursive=False, lvl=0):
 #     opts  = ['-R', '-s']
 #     return __nfs4_setfacl__(path, '', n_aces, opts, lvl=lvl)
 
-def setACE(fpath, ppath, users=[], contributors=[], admins=[], force=False, lvl=0):
+def __setTraverseACE__(path, users=[], lvl=0):
+    ''' make sure the given users have at-least the traverse permission (the 'x' ACE) on the given path.
+    :param path: the path
+    :param users: a list of users
+    :param lvl: logging level
+    :return: True if succeed, otherwise False
+    '''
+
+    logger = getMyLogger(lvl=lvl)
+
+    acl = getACE(path, lvl=lvl)
+
+    for ace in acl[path]:
+        if ( ace[0] == 'A' and ace[2].split('@')[0] in users ):
+            # in this case, no need to set TransverseACE for the user, remove it from users list
+            users.remove(ace[2].split('@')[0])
+            logger.debug(':'.join(ace))
+
+    return True
+
+def setACE(fpath, ppath, users=[], contributors=[], admins=[], force=False, traverse=False, lvl=0):
     ''' adds/sets ACEs for user, contributor and admin roles.
+    :param traverse:
          - force: update the ACL anyway even the given user is already in the role.
     '''
 
@@ -242,7 +278,7 @@ def setACE(fpath, ppath, users=[], contributors=[], admins=[], force=False, lvl=
 
     ulist = {ROLE_ADMIN      : admins,
              ROLE_CONTRIBUTOR: contributors,
-             ROLE_USER       : users} 
+             ROLE_USER       : users}
 
     ## get the existing ACL
     o_aces = getACE(fpath, recursive=False, lvl=lvl)[fpath]
@@ -264,6 +300,8 @@ def setACE(fpath, ppath, users=[], contributors=[], admins=[], force=False, lvl=
     if not _ulist_a:
         logger.warning("I have nothing to do!")
         return True
+
+    ## TODO: making sure users in _ulist_a have at-least traverse permission if this is a sub-directory within project
             
     ## compose new ACL based on the existing ACL 
     n_aces = []
