@@ -14,7 +14,7 @@ from utils.acl.Logger import getLogger
 class Nfs4ProjectACL(ProjectACL):
 
     def __init__(self, project_root, lvl=0):
-        ProjectACL.__init__(project_root, lvl)
+        ProjectACL.__init__(self, project_root, lvl)
         self.type = 'NFS4'
 
         self.ROLE_PERMISSION = {ROLE_ADMIN: 'RXWdDoy',
