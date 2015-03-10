@@ -11,7 +11,7 @@ lvl = 3
 fs = Nfs4ProjectACL(project_root, lvl)
 
 # get roles
-roles = fs.getRoles()
+roles = fs.getRoles(recursive=True)
 for p, r in roles.iteritems():
     print 'path: %s' % p, r
 
@@ -25,3 +25,10 @@ for p, r in roles.iteritems():
     print 'path: %s' % p, r
 
 # delete users
+ick = fs.detUsers(users=['rendbru'])
+
+# get roles for all sub-paths
+roles = fs.getRoles(recursive=True)
+for p, r in roles.iteritems():
+    print 'path: %s' % p, r
+
