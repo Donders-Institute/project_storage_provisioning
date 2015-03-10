@@ -123,18 +123,62 @@ class Nfs4ProjectACL(ProjectACL):
                 n_aces.append(ace)
 
         # prepending ACEs related to the given user list
-        opts = ['-R', '-s']
         for k, v in ulist.iteritems():
             self.logger.info('setting %s permission ...' % k)
             _perm = self.__get_permission__(k)
             for u in v:
                 n_aces.insert(0, ACE(type='A', flag='fd', principle='%s@dccn.nl' % u, mask='%s' % _perm['A']))
 
-        return self.__nfs4_setfacl__(path, n_aces, opts)
+        # command-line options for nfs4_setfacl
+        _opts = ['-s']
+        if recursive:
+            _opts.append('-R')
 
-    def delUser(self, path='', users=[]):
+        return self.__nfs4_setfacl__(path, n_aces, _opts)
+
+    def delUser(self, path='', users=[], recursive=True, force=False):
+
         path = os.path.join(self.project_root, path)
-        pass
+
+        # get current ACEs on the path
+        o_aces = self.__nfs4_getfacl__(path)
+
+        if not force:
+            # check users in existing ACL to avoid redundant operations
+            _u_exist = []
+            for ace in o_aces:
+                u = ace.principle.split('@')[0]
+                if u not in _u_exist + self.default_principles:
+                    _u_exist.append(u)
+
+            # resolve the users requiring actual removal of ACEs
+            _u_remove = list( set(users) & set(_u_exist) )
+            for u in users:
+                if u not in _u_remove:
+                    self.logger.warning('ignore user not presented in ACL: %s' % u)
+
+            users = _u_remove
+
+        # simply return with True if no user for ACE removal
+        if not users:
+            self.logger.warning("I have nothing to do!")
+            return True
+
+        # compose new ACL regarding the removal
+        n_aces = []
+        for ace in o_aces:
+            u = ace.principle.split('@')[0]
+            if u not in users:
+                n_aces.append(ace)
+            else:
+                self.logger.info('deleting ACEs of user: %s' % u)
+
+        # command-line options for nfs4_setfacl
+        _opts = ['-s']
+        if recursive:
+            _opts.append('-R')
+
+        return self.__nfs4_setfacl__(path, n_aces, _opts)
 
     def mapACEtoRole(self, ace):
         diff = {}
@@ -275,7 +319,7 @@ class Nfs4ProjectACL(ProjectACL):
                      'aces': aces}, f)
         f.close()
 
-        cmd += '"%s" %s' % (', '.join(str(aces)), path)
+        cmd += '"%s" %s' % (', '.join(map(lambda x:x.__str__(), aces)), path)
 
         s = Shell()
         rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=None)
