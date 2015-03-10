@@ -1,13 +1,21 @@
 #!/usr/bin/env python
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../external/lib/python')
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../')
-from utils.acl.INFS4 import INFS4
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../external/lib/python')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
+from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 
-fs = INFS4()
+
+project_root = '/project/3010000.01'
+lvl = 3
+fs = Nfs4ProjectACL(project_root, lvl)
 
 # get roles
-path = '/project/3010000.01'
-roles = fs.getRoles(path)
-print roles[path]
+roles = fs.getRoles()
+
+for p, r in roles.iteritems():
+    print 'path: %s' % p, r
+
+# set roles
+
+# delete users
