@@ -8,8 +8,6 @@ from utils.acl.ACE import ACE
 from utils.acl.ProjectACL import ProjectACL
 from utils.Shell import Shell
 from utils.acl.UserRole import ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_TRAVERSE, ROLE_USER
-from utils.acl.Logger import getLogger
-
 
 class Nfs4ProjectACL(ProjectACL):
 
