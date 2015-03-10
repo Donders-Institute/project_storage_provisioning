@@ -10,7 +10,7 @@ from utils.acl.Logger import getLogger
 class INFS4(IFileSystem):
 
     def __init__(self):
-        super(INFS4, self).__init__()
+        IFileSystem.__init__(self)
         self.type = 'NFS4'
         self.logger = getLogger()
 

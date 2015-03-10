@@ -3,6 +3,8 @@ import inspect
 from colorlog import ColoredFormatter
 import logging
 
+loggers = {}
+
 def getLogger(name=None, lvl=0):
     """
     gets or initiates a logger object with a specified name
