@@ -89,7 +89,8 @@ class Nfs4ProjectACL(ProjectACL):
 
         ulist = {ROLE_ADMIN: admins,
                  ROLE_CONTRIBUTOR: contributors,
-                 ROLE_USER: users}
+                 ROLE_USER: users,
+                 ROLE_TRAVERSE: []}
 
         # get current ACEs on the path
         o_aces = self.__nfs4_getfacl__(path)
