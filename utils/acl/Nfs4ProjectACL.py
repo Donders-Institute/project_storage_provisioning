@@ -92,7 +92,7 @@ class Nfs4ProjectACL(ProjectACL):
                  ROLE_USER: users}
 
         # get current ACEs on the path
-        o_aces = self.__nfs4_getfacl__(path)[path]
+        o_aces = self.__nfs4_getfacl__(path)
 
         if not force:
             # check user roles in existing ACL to avoid redundant operations
