@@ -32,8 +32,7 @@ class Nfs4ProjectACL(ProjectACL):
 
     def getRoles(self, path='', recursive=False):
 
-        if path:
-            path = os.path.join(self.project_root, path)
+        path = os.path.join(self.project_root, path)
 
         def __fs_walk_error__(err):
             print 'cannot list file: %s' % err.filename
@@ -78,8 +77,7 @@ class Nfs4ProjectACL(ProjectACL):
 
     def setRoles(self, path='', users=[], contributors=[], admins=[], recursive=True, force=False, traverse=False):
 
-        if path:
-            path = os.path.join(self.project_root, path)
+        path = os.path.join(self.project_root, path)
 
         # stop role setting if the same user id appears in multiple user lists
         common = list( set(users) & set(contributors) & set(admins) )
@@ -134,8 +132,7 @@ class Nfs4ProjectACL(ProjectACL):
         return self.__nfs4_setfacl__(path, n_aces, opts)
 
     def delUser(self, path='', users=[]):
-        if path:
-            path = os.path.join(self.project_root, path)
+        path = os.path.join(self.project_root, path)
         pass
 
     def mapACEtoRole(self, ace):

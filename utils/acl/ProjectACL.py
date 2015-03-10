@@ -14,7 +14,7 @@ class ProjectACL:
 
         self.type = None
         self.project_root = project_root
-        self.logger = getLogger(lvl=lvl)
+        self.logger = getLogger(name=self.__class__, lvl=lvl)
 
     def setRoles(self, path='', users=[], contributors=[], admins=[], recursive=True, force=False, traverse=False):
         """
