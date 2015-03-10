@@ -16,7 +16,7 @@ def getLogger(name=None, lvl=0):
     global loggers
 
     lc_formatter = ColoredFormatter(
-        "%(log_color)s[%(levelname)-8s:%(name)s.%(funcName)s] %(message)s%(reset)s",
+        "%(log_color)s[%(levelname)-8s:%(name)s.%(funcName)s-32s] %(message)s%(reset)s",
         datefmt=None,
         reset=True,
         log_colors={'DEBUG': 'cyan',
