@@ -132,7 +132,7 @@ class Nfs4ProjectACL(ProjectACL):
         # command-line options for nfs4_setfacl
         _opts = ['-s']
         if recursive:
-            _opts.append('-R')
+            _opts.insert(0, '-R')
 
         return self.__nfs4_setfacl__(path, n_aces, _opts)
 
@@ -176,7 +176,7 @@ class Nfs4ProjectACL(ProjectACL):
         # command-line options for nfs4_setfacl
         _opts = ['-s']
         if recursive:
-            _opts.append('-R')
+            _opts.insert(0, '-R')
 
         return self.__nfs4_setfacl__(path, n_aces, _opts)
 
