@@ -136,7 +136,7 @@ class Nfs4ProjectACL(ProjectACL):
 
         return self.__nfs4_setfacl__(path, n_aces, _opts)
 
-    def delUser(self, path='', users=[], recursive=True, force=False):
+    def delUsers(self, path='', users=[], recursive=True, force=False):
 
         path = os.path.join(self.project_root, path)
 

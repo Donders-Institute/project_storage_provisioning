@@ -25,7 +25,7 @@ for p, r in roles.iteritems():
     print 'path: %s' % p, r
 
 # delete users
-ick = fs.detUsers(users=['rendbru'])
+ick = fs.delUsers(users=['rendbru'])
 
 # get roles for all sub-paths
 roles = fs.getRoles(recursive=True)

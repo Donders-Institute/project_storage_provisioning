@@ -39,7 +39,7 @@ class ProjectACL:
         """
         raise NotImplementedError
 
-    def delUser(self, path='', users=[], recursive=True, force=False):
+    def delUsers(self, path='', users=[], recursive=True, force=False):
         """
         deletes specified users from accessing to the given path
         :param path: the file system path relative to the project_root
