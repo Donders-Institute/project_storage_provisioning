@@ -4,6 +4,7 @@ import pickle
 import pwd
 import datetime
 import socket
+import re
 from utils.acl.ACE import ACE
 from utils.acl.ProjectACL import ProjectACL
 from utils.Shell import Shell
@@ -111,7 +112,12 @@ class Nfs4ProjectACL(ProjectACL):
             self.logger.warning("I have nothing to do!")
             return True
 
-        # TODO: making sure users in _ulist_a have traverse permission if for parent directories.
+        # set traverse on upper-level directories
+        if traverse:
+            # resolve the starting directory for traverse
+            tpath = os.path.split(os.path.relpath(path, self.project_root))[0]
+            if self.__set_traverse_role__(tpath, _ulist_a):
+                return False
 
         # compose new ACL based on the existing ACL
         n_aces = []
@@ -188,6 +194,45 @@ class Nfs4ProjectACL(ProjectACL):
         return sorted(diff.items(), key=lambda x: len(x[1]))[0][0]
 
     # internal functions
+    def __set_traverse_role__(self, path, users):
+        """
+        sets traverse role of given users on path and upwards to project_root.
+        :param path: the file system path under project_root
+        :param users: a list of user ids
+        :return: True if success, otherwiser False
+        """
+
+        path = os.path.join(self.project_root, path)
+
+        ick = True
+        while path != self.project_path:
+
+            self.logger.debug('setting traverse role on %s' % path)
+            # get current ACEs on the path
+            o_aces = self.__nfs4_getfacl__(path)
+            n_aces = [] + o_aces
+
+            # consider users that needs to be added to the ACL for traverse role
+            # we assume the user has already the traverse permission if it is already in ACL
+            for u in users:
+                if u not in map(lambda x: x.principle.split('@')[0], o_aces):
+                    self.logger.debug("adding user to traverse role: %s" % u)
+                    _perm = self.__get_permission__(ROLE_TRAVERSE)
+                    n_aces.insert(0, ACE(type='A', flag='fd', principle='%s@dccn.nl' % u, mask=_perm['A']))
+
+            # apply n_aces
+            _opts = ['-s']
+            ick = self.__nfs4_setfacl__(path, n_aces, _opts)
+
+            if not ick:
+                self.logger.error('setting ACL for traverse role failed: %s' % path)
+                break
+            else:
+                # go on level upward on the directory tree
+                path = os.path.dirname(re.sub('/*$', '', path))
+
+        return ick
+
     def __get_permission__(self, role):
         """
         gets ACE's permission mask for DENY and ALLOW types wrt the given role
