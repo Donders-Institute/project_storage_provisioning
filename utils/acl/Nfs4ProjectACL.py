@@ -114,7 +114,7 @@ class Nfs4ProjectACL(ProjectACL):
         if traverse:
             # resolve the starting directory for traverse
             tpath = os.path.split(os.path.relpath(path, self.project_root))[0]
-            if self.__set_traverse_role__(tpath, _ulist_a):
+            if not self.__set_traverse_role__(tpath, _ulist_a):
                 return False
 
         # compose new ACL based on the existing ACL
