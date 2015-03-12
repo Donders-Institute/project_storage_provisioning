@@ -36,5 +36,13 @@ class RoleData:
         if role in self.__dict__.keys() and user in self.__dict__[role]:
             self.__dict__[role].remove(user)
 
+    def __getitem__(self, key):
+        """
+        map RoleData[key] to RoleData.key
+        :param key: the attribute of the RoleData object
+        :return: the value
+        """
+        return self.__dict__[key]
+
     def __repr__(self):
         return repr(self.__dict__)
