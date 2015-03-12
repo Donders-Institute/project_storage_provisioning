@@ -9,9 +9,9 @@ import re
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils.ACL    import getACE, getRoleFromACE, ROLE_PERMISSION
 from utils.Common import getConfig, getMyLogger
-from utils.Report import printRoleTableMultipath
+from utils.acl.Report import printRoleTableMultipath
+from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 
 ## execute the main program
 if __name__ == "__main__":
@@ -56,6 +56,7 @@ if __name__ == "__main__":
         args.pid = os.listdir(args.basedir)
 
     roles = {}
+    fs = Nfs4ProjectACL('', lvl=args.lvl)
     for id in args.pid:
         p = os.path.join(args.basedir, id)
 
@@ -81,27 +82,11 @@ if __name__ == "__main__":
 
         ## create empty role dict for the project
         roles[id] = []
+        fs.project_root = p
 
         for pp in plist:
             r_data = {'path': pp}
-
-            for r in ROLE_PERMISSION.keys():
-                r_data[r] = []
-
-            ## get ACL
-            aces = getACE(pp, recursive=False, lvl=args.verbose)
-
-            if aces[pp]:
-                for tp,flag,principle,permission in aces[pp]:
-
-                    ## exclude the default principles
-                    u = principle.split('@')[0]
-
-                    if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
-                        r = getRoleFromACE(permission, lvl=args.verbose)
-                        r_data[r].append(u)
-                        logger.debug('user %s: permission %s, role %s' % (u, permission,r))
-            roles[id].append(r_data)
+            roles[id] = fs.getRoles(re.sub('r^%s/' % p, '', pp), recursive=False)
 
     ## printing or updating project DB database
     printRoleTableMultipath(roles)

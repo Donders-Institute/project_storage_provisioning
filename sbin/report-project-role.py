@@ -8,7 +8,6 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../external/lib/pyt
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/..')
 from utils.ACL    import getACE, getRoleFromACE, ROLE_PERMISSION
 from utils.Common import getConfig, getMyLogger
-from utils.Report import printRoleTable
 from utils.IProjectDB import getDBConnectInfo,updateProjectDatabase
 
 ## execute the main program

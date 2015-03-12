@@ -1,24 +1,23 @@
 #!/usr/bin/env python
 import sys
 import os
-from utils.ACL    import ROLE_PERMISSION
 
-## loading PrettyTable for table output 
+## loading PrettyTable for table output
+from utils.acl.UserRole import PROJECT_ROLES
 from prettytable import PrettyTable
 
 def printRoleTable(roles):
     ''' display project roles in prettytable
     '''
-    r_keys = ROLE_PERMISSION.keys()
 
     t = PrettyTable()
-    t.field_names = ['project', 'path'] + r_keys
+    t.field_names = ['project', 'path'] + PROJECT_ROLES
 
     for p,r in roles.iteritems():
         data = []
         data.append(p)
         data.append(r['path'])
-        for k in r_keys:
+        for k in PROJECT_ROLES:
             if r[k]:
                 data.append(','.join(r[k]))
             else:
@@ -31,17 +30,14 @@ def printRoleTable(roles):
 def printRoleTableMultipath(roles):
     ''' display project roles in prettytable
     '''
-    r_keys = ROLE_PERMISSION.keys()
 
     t = PrettyTable()
-    t.field_names = ['project', 'path'] + r_keys
+    t.field_names = ['project', 'path'] + PROJECT_ROLES
 
-    for pid,role in roles.iteritems():
-        for r in role:
-            data = []
-            data.append(pid)
-            data.append(r['path'])
-            for k in r_keys:
+    for pid, rdata in roles.iteritems():
+        for p, r in rdata:
+            data = [pid, p]
+            for k in PROJECT_ROLES:
                 if r[k]:
                     data.append(','.join(r[k]))
                 else:
