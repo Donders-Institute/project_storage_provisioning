@@ -8,8 +8,8 @@ import re
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils.ACL    import getACE, setACE, delACE, getRoleFromACE, ROLE_PERMISSION
 from utils.Common import getConfig, getMyLogger, csvArgsToList
+from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 
 ## execute the main program
 if __name__ == "__main__":
@@ -79,14 +79,15 @@ if __name__ == "__main__":
     except ValueError, e:
         pass
 
+    fs = Nfs4ProjectACL('',lvl=args.verbose)
+
     for id in args.pid:
-        ppath = os.path.join(args.basedir, id)
-        fpath = ppath
+        p = os.path.join(args.basedir, id)
 
         if args.subdir:
             # if args.basedir has leading ppath, substitute it with empty string
-            fpath = os.path.join(ppath, re.sub(r'^%s/' % ppath, '', args.subdir))
+            fpath = os.path.join(p, re.sub(r'^%s/' % p, '', args.subdir))
 
         if os.path.exists(fpath):
-            if not delACE(fpath, ppath, _l_user, force=args.force, lvl=args.verbose):
+            if not fs.delUsers(re.sub(r'^%s/' % p, '', args.subdir), _l_user, force=args.force, lvl=args.verbose):
                 logger.error('fail to remove %s from project %s.' % (','.join(_l_user), id))
