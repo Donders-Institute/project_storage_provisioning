@@ -20,7 +20,7 @@ def printRoleTable(roles):
                 if rd[k]:
                     data.append(','.join(rd[k]))
                 else:
-                    data.append('N/A')
+                    data.append('x')
             t.add_row(data)
 
     t.sortby = 'project'
