@@ -135,12 +135,12 @@ if __name__ == "__main__":
 
         if args.subdir:
             # if args.basedir has leading ppath, substitute it with empty string
-            fpath = os.path.join(p, re.sub(r'^%s/' % p, '', args.subdir))
+            p = os.path.join(fs.project_root, re.sub(r'^%s/' % fs.project_root, '', args.subdir))
 
-        if os.path.exists(fpath):
-            logger.info('setting file or directory: %s' % fpath)
+        if os.path.exists(p):
+            logger.info('setting file or directory: %s' % p)
 
-            fs.setRoles(re.sub(r'^%s/' % p, '', args.subdir), users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force, traverse=args.traverse)
+            fs.setRoles(re.sub(r'^%s/' % fs.project_root, '', args.subdir), users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force, traverse=args.traverse)
 
         else:
             logger.error('file or directory not found: %s' % fpath)

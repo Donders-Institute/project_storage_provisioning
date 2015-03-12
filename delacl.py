@@ -83,11 +83,12 @@ if __name__ == "__main__":
 
     for id in args.pid:
         p = os.path.join(args.basedir, id)
+        fs.project_root = p
 
         if args.subdir:
             # if args.basedir has leading ppath, substitute it with empty string
-            fpath = os.path.join(p, re.sub(r'^%s/' % p, '', args.subdir))
+            p = os.path.join(fs.project_root, re.sub(r'^%s/' % fs.project_root, '', args.subdir))
 
-        if os.path.exists(fpath):
-            if not fs.delUsers(re.sub(r'^%s/' % p, '', args.subdir), _l_user, force=args.force, lvl=args.verbose):
+        if os.path.exists(p):
+            if not fs.delUsers(re.sub(r'^%s/' % fs.project_root, '', args.subdir), _l_user, force=args.force, lvl=args.verbose):
                 logger.error('fail to remove %s from project %s.' % (','.join(_l_user), id))
