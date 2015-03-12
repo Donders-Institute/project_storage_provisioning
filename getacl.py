@@ -85,8 +85,7 @@ if __name__ == "__main__":
         fs.project_root = p
 
         for pp in plist:
-            r_data = {'path': pp}
-            roles[id] = fs.getRoles(re.sub('r^%s/' % p, '', pp), recursive=False)
+            roles[id] += fs.getRoles(re.sub('r^%s/' % p, '', pp), recursive=False)
 
     ## printing or updating project DB database
     printRoleTable(roles)
