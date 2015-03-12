@@ -205,7 +205,7 @@ class Nfs4ProjectACL(ProjectACL):
         path = os.path.join(self.project_root, path)
 
         ick = True
-        while path != self.project_root:
+        while path != os.path.split(self.project_root)[0]:
 
             self.logger.debug('setting traverse role on %s' % path)
             # get current ACEs on the path
