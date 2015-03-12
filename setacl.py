@@ -10,6 +10,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.ACL    import setACE
 from utils.Common import getConfig, getMyLogger, csvArgsToList
+from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 
 ## execute the main program
 if __name__ == "__main__":
@@ -70,6 +71,12 @@ if __name__ == "__main__":
                       default = '',
                       help    = 'specify the relative/absolute path to a sub-directory to which the role setting is applied')
 
+    parg.add_argument('-t','--traverse',
+                      action  = 'store_true',
+                      dest    = 'traverse',
+                      default = False,
+                      help    = 'set upper level directories traverse-able for the users in question, up to the project\'s root directory')
+
 #    parg.add_argument('-n','--new',
 #                      action  = 'store_true',
 #                      dest    = 'do_create',
@@ -119,18 +126,21 @@ if __name__ == "__main__":
     except ValueError, e:
         pass
 
+    fs = Nfs4ProjectACL('', lvl=args.verbose)
+
     for id in args.pid:
 
-        ppath = os.path.join(args.basedir, id)
-        fpath = ppath
+        p = os.path.join(args.basedir, id)
+        fs.project_root = p
 
         if args.subdir:
             # if args.basedir has leading ppath, substitute it with empty string
-            fpath = os.path.join(ppath, re.sub(r'^%s/' % ppath, '', args.subdir))
+            fpath = os.path.join(p, re.sub(r'^%s/' % p, '', args.subdir))
 
         if os.path.exists(fpath):
             logger.info('setting file or directory: %s' % fpath)
-            setACE(fpath, ppath, users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force,
-                   lvl=args.verbose)
+
+            fs.setRoles(re.sub(r'^%s/' % p, '', args.subdir), users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force, traverse=args.traverse)
+
         else:
             logger.error('file or directory not found: %s' % fpath)
