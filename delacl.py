@@ -90,5 +90,5 @@ if __name__ == "__main__":
             p = os.path.join(fs.project_root, re.sub(r'^%s/' % fs.project_root, '', args.subdir))
 
         if os.path.exists(p):
-            if not fs.delUsers(re.sub(r'^%s/' % fs.project_root, '', args.subdir), _l_user, force=args.force, lvl=args.verbose):
+            if not fs.delUsers(re.sub(r'^%s/' % fs.project_root, '', args.subdir), _l_user, force=args.force):
                 logger.error('fail to remove %s from project %s.' % (','.join(_l_user), id))

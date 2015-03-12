@@ -143,4 +143,4 @@ if __name__ == "__main__":
             fs.setRoles(re.sub(r'^%s/' % fs.project_root, '', args.subdir), users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force, traverse=args.traverse)
 
         else:
-            logger.error('file or directory not found: %s' % fpath)
+            logger.error('file or directory not found: %s' % p)
