@@ -56,7 +56,7 @@ if __name__ == "__main__":
         args.pid = os.listdir(args.basedir)
 
     roles = {}
-    fs = Nfs4ProjectACL('', lvl=args.lvl)
+    fs = Nfs4ProjectACL('', lvl=args.verbose)
     for id in args.pid:
         p = os.path.join(args.basedir, id)
 
