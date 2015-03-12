@@ -10,7 +10,7 @@ import re
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.Common import getConfig, getMyLogger
-from utils.acl.Report import printRoleTableMultipath
+from utils.acl.Report import printRoleTable
 from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 
 ## execute the main program
@@ -89,4 +89,4 @@ if __name__ == "__main__":
             roles[id] = fs.getRoles(re.sub('r^%s/' % p, '', pp), recursive=False)
 
     ## printing or updating project DB database
-    printRoleTableMultipath(roles)
+    printRoleTable(roles)
