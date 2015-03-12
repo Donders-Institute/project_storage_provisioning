@@ -13,12 +13,12 @@ def printRoleTable(roles):
     t = PrettyTable()
     t.field_names = ['project', 'path'] + PROJECT_ROLES
 
-    for pid, rdata in roles.iteritems():
-        for p, r in rdata.iteritems():
-            data = [pid, p]
+    for pid, rd_list in roles.iteritems():
+        for rd in rd_list:
+            data = [pid, rd.path]
             for k in PROJECT_ROLES:
-                if r[k]:
-                    data.append(','.join(r[k]))
+                if rd[k]:
+                    data.append(','.join(rd[k]))
                 else:
                     data.append('N/A')
             t.add_row(data)

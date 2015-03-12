@@ -35,7 +35,7 @@ class ProjectACL:
         gets user roles of the given path.
         :param path: the file system path relative to the project_root
         :param recursive: get roles recursively for all sub-paths
-        :return: a dictionary with keys referring to the three roles: user, contributor, administrator
+        :return: a list of RoleData objects
         """
         raise NotImplementedError
 

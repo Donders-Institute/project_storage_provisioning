@@ -5,6 +5,7 @@ import pwd
 import datetime
 import socket
 import re
+from utils.acl.RoleData import RoleData
 from utils.acl.ACE import ACE
 from utils.acl.ProjectACL import ProjectACL
 from utils.Shell import Shell
@@ -51,23 +52,20 @@ class Nfs4ProjectACL(ProjectACL):
             acl[path] = self.__nfs4_getfacl__(path)
 
         # convert NFSV4 ACL into roles
-        roles = {}
+        roles = []
         for p, aces in acl.iteritems():
 
-            # initialize role_data for the path 'p'
-            r_data = {}
-            for r in self.ROLE_PERMISSION.keys():
-                r_data[r] = []
+            rdata = RoleData(path=p)
 
             for ace in aces:
                 # exclude the default principles
                 u = ace.principle.split('@')[0]
                 if u not in self.default_principles and ace.type in ['A']:
                     r = self.mapACEtoRole(ace)
-                    r_data[r].append(u)
+                    rdata.addUserToRole(r, u)
                     self.logger.debug('user %s: permission %s, role %s' % (u, ace.mask, r))
 
-            roles[p] = r_data
+            roles.append(rdata)
 
         return roles
 
