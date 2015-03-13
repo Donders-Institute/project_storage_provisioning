@@ -4,6 +4,8 @@ import getpass
 import pprint
 
 from utils.Common import getMyLogger
+from utils.acl.UserRole import PROJECT_ROLES
+
 
 class ProjectRoleSettingAction:
     '''object containing attribute for the project access control setup action'''
@@ -248,11 +250,12 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
                 qry2  = 'INSERT INTO acls (project, user, projectRole) VALUES (%s, %s, %s)'
                 data2 = []
 
-                for p,r in roles.iteritems():
-                    for k,v in r.iteritems():
-                        for u in v:
-                            data1.append( (p,) )
-                            data2.append( (p, u, k) )
+                for p, rd_list in roles.iteritems():
+                    for rd in rd_list:
+                        for k in PROJECT_ROLES:
+                            for u in rd[k]:
+                                data1.append((p,))
+                                data2.append((p, u, k))
 
                 ## remove duplication
                 data1 = list(set(data1))

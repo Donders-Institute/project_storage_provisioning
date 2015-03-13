@@ -4,23 +4,24 @@ import os
 from datetime import datetime 
 from argparse import ArgumentParser
 
-## adding PYTHONPATH for access to utility modules and 3rd-party libraries
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../external/lib/python')
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../')
-from utils.ACL import setACE, delACE, ROLE_PERMISSION, getACE, getRoleFromACE
+# adding PYTHONPATH for access to utility modules and 3rd-party libraries
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../external/lib/python')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 from utils.Common import getConfig, getMyLogger
 from utils.IStorage import StorageType, createProjectDirectory
 from utils.IProjectDB import getDBConnectInfo, setProjectRoleConfigActions, getProjectRoleConfigActions, updateProjectDatabase
+from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 
-## execute the main program
+
+# execute the main program
 if __name__ == "__main__":
 
-    ## load configuration file
+    # load configuration file
     cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/../etc/config.ini' )
 
     parg = ArgumentParser(description='activates project roles settings pending in the ProjectDB', version="0.1")
 
-    ## optional arguments
+    # optional arguments
     parg.add_argument('-l','--loglevel',
                       action  = 'store',
                       dest    = 'verbose',
@@ -57,20 +58,22 @@ if __name__ == "__main__":
 
     logger = getMyLogger(name=os.path.basename(__file__), lvl=args.verbose)
 
-    ## project database connection information
+    # project database connection information
     (db_host, db_uid, db_name, db_pass) = getDBConnectInfo(cfg)
     
-    ## retrieve pending actions
+    # retrieve pending actions
     actions = getProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, lvl=args.verbose)
 
     if not actions:
-        ## break the program when no pending actions
+        # break the program when no pending actions
         logger.warn('I have nothing to do!')
         sys.exit(0) 
 
-    ## re-org actions in projects so that we can perform actions by project
+    # re-org actions in projects so that we can perform actions by project
     prjs = list( set(map(lambda x:x.pid, actions)) )
 
+
+    fs = Nfs4ProjectACL('', lvl=args.verbose)
     for pid in prjs:
 
         p_actions = filter(lambda x:x.pid==pid, actions)
@@ -79,7 +82,7 @@ if __name__ == "__main__":
 
         p_dir = os.path.join(args.basedir, pid)
 
-        ## create project directory if not available
+        # create project directory if not available
         if not os.path.exists( p_dir ):
 
             rc    = True
@@ -89,7 +92,7 @@ if __name__ == "__main__":
                 stype = 'fs_dir'
             else:
                 if args.do_test:
-                    ## in test mode, we create a local directory
+                    # in test mode, we create a local directory
                     stype = 'fs_dir'
                 else:
                     stype = 'netapp_volume'
@@ -108,7 +111,7 @@ if __name__ == "__main__":
                     logger.error('created directory not available: %s' % p_dir)
                     continue
                     
-        ## perform set ACL action
+        # perform set ACL action
         logger.info('  |-> performing set ACL on project: %s' % pid)
         _set_a     = filter(lambda x:x.action=='set' , p_actions)
         _l_admin   = map(lambda x:x.uid, filter(lambda x:x.role=='admin'      , _set_a))
@@ -120,20 +123,20 @@ if __name__ == "__main__":
         logger.info('  |- set user role: %s'        % repr(_l_user))
 
         rc = True
+        fs.project_root = p_dir
         if not args.do_test:
             # while initializing the project's ACL, there is no need to set ACL for sub-directories.
             # therefore, the first two arguments of setACE are the same and equal to the project's top directory.
-            rc = setACE(p_dir, p_dir, users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force,
-                        lvl=args.verbose)
+            rc = fs.setRoles(users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force, traverse=False)
 
         if rc:
             for a in _set_a:
                 a.atime = datetime.now()
 
-        ## perform del ACL action
+        # perform del ACL action
         logger.info('  |- performing del ACL on project: %s' % pid)
-        _del_a = filter(lambda x:x.action=='delete' , p_actions)
-        _l_user= map(lambda x:x.uid, _del_a)
+        _del_a = filter(lambda x: x.action == 'delete', p_actions)
+        _l_user = map(lambda x: x.uid, _del_a)
 
         logger.info('  |- del user(s): %s' % repr(_l_user))
 
@@ -141,32 +144,17 @@ if __name__ == "__main__":
         if not args.do_test:
             # while initializing the project's ACL, there is no need to set ACL for sub-directories.
             # therefore, the first two arguments of delACE are the same and equal to the project's top directory.
-            rc = delACE(p_dir, p_dir, _l_user, force=args.force, lvl=args.verbose)
+            rc = fs.delUsers(users=_l_user, force=args.force)
 
         if rc:
             for a in _del_a:
                 a.atime = datetime.now()
 
-        ## update project database on activate roles for this project
-        setProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, actions=filter(lambda x:x.atime, actions), lvl=args.verbose)
+        # update project database on activate roles for this project
+        setProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, actions=filter(lambda x: x.atime, actions), lvl=args.verbose)
 
-        ## retrieve the up-to-date user roles for this project
-        roles = {pid: {}}
-        for r in ROLE_PERMISSION.keys():
-            roles[pid][r] = []
+        # retrieve the up-to-date user roles for this project
+        roles = {pid: fs.getRoles(recursive=False)}
 
-        ## get ACL associated with the project directory
-        aces = getACE(p_dir, recursive=False, lvl=args.verbose)
-
-        if aces[p_dir]:
-            for tp, flag, principle, permission in aces[p_dir]:
-
-                ## exclude the default principles
-                u = principle.split('@')[0]
-
-                if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
-                    r = getRoleFromACE(permission, lvl=args.verbose)
-                    roles[pid][r].append(u)
-
-        ## updating project DB database with the currently activated user roles
+        # updating project DB database with the currently activated user roles
         updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)

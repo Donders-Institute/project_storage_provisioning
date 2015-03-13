@@ -3,28 +3,29 @@ import sys
 import os
 from argparse import ArgumentParser
 
-## adding PYTHONPATH for access to utility modules and 3rd-party libraries
+# adding PYTHONPATH for access to utility modules and 3rd-party libraries
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/..')
-from utils.ACL    import getACE, getRoleFromACE, ROLE_PERMISSION
 from utils.Common import getConfig, getMyLogger
 from utils.IProjectDB import getDBConnectInfo,updateProjectDatabase
+from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 
-## execute the main program
+# execute the main program
 if __name__ == "__main__":
 
-    ## load configuration file
+    # load configuration file
     cfg  = getConfig( os.path.dirname(os.path.abspath(__file__)) + '/../etc/config.ini' )
 
     parg = ArgumentParser(description='gets access rights of project storages', version="0.1")
 
-    ## positional arguments
+    # positional arguments
     parg.add_argument('pid',
                       metavar = 'pid',
                       nargs   = '*',
                       help    = 'the project id')
 
-    ## optional arguments
+    # optional arguments
     parg.add_argument('-l','--loglevel',
                       action  = 'store',
                       dest    = 'verbose',
@@ -47,27 +48,10 @@ if __name__ == "__main__":
         args.pid = os.listdir(args.basedir)
 
     roles = {}
+    fs = Nfs4ProjectACL('', lvl=args.verbose)
     for id in args.pid:
-        p = os.path.join(args.basedir, id)
-
-        ## create empty role dict for the project
-        roles[id] = {}
-        for r in ROLE_PERMISSION.keys():
-            roles[id][r] = []
-
-        ## get ACL
-        aces = getACE(p, recursive=False, lvl=args.verbose)
-
-        if aces[p]:
-            for tp,flag,principle,permission in aces[p]:
-
-                ## exclude the default principles
-                u = principle.split('@')[0]
-
-                if u not in ['GROUP','OWNER','EVERYONE'] and tp in ['A']:
-                    r = getRoleFromACE(permission, lvl=args.verbose)
-                    roles[id][r].append(u)
-                    logger.debug('user %s: permission %s, role %s' % (u, permission,r))
+        fs.project_root = os.path.join(args.basedir, id)
+        roles[id] = fs.getRoles(recursive=False)
 
     # updating database
     (db_host, db_uid, db_name, db_pass) = getDBConnectInfo(cfg)
