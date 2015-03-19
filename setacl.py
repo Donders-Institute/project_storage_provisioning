@@ -8,7 +8,6 @@ import re
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils.ACL    import setACE
 from utils.Common import getConfig, getMyLogger, csvArgsToList
 from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 
