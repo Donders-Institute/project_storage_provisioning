@@ -279,7 +279,7 @@ class Nfs4ProjectACL(ProjectACL):
         rc, output, m = s.cmd1(cmd, allowed_exit=[0, 255], timeout=None)
         if rc != 0:
             self.logger.error('%s failed' % cmd)
-            return None
+            return []
         else:
             return __parseACL__(output)
 
