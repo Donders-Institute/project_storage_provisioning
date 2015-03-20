@@ -33,11 +33,11 @@ For general end-users, a tool called `prj_getacl` is used to show user roles of 
 
 ```Bash
 $ prj_getacl 3010000.01
-+------------+---------------------+--------+-------------+--------+
-|  project   |         path        | admin  | contributor |  user  |
-+------------+---------------------+--------+-------------+--------+
-| 3010000.01 | /project/3010000.01 | honlee |   rendbru   | edwger |
-+------------+---------------------+--------+-------------+--------+
++------------+---------------------+--------+-------------+--------+----------+
+|  project   |         path        | admin  | contributor |  user  | traverse |
++------------+---------------------+--------+-------------+--------+----------+
+| 3010000.01 | /project/3010000.01 | honlee |    martyc   | edwger | rendbru  |
++------------+---------------------+--------+-------------+--------+----------+
 ```
 
 The script support few optional arguments. Some usefule ones are listed in the following table. 
@@ -82,3 +82,12 @@ $ prj_setacl -p subject_001 -c edwger 3010000.01
 ```
 
 Note: One should note that changing and deleting user role is always applied recursively.
+
+#### The "Traverse" role
+When granting user a role to a sub-directory, a minimum permission on upper-level directories should also be given to the user to "pass through" the directory tree.  This minimum permission is given by assiging the user to the `Traverse` role.
+
+In practice, the assignment is more meaningful when it takes place at the time the user is given a role to a sub-directory, therefore, it is done via the `-t` option of the `prj_setacl` command.  For example, to give user `rendbru` the `Contributor` role in the subdirectory `subject_001` with the minimum permission to pass through the top-level directory of project `3010000.01`, one does
+
+```bash
+$ prj_setacl -t -p subject_001 -c rendbru 3010000.01
+```
