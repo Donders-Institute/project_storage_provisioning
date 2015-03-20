@@ -6,16 +6,18 @@
 #
 # Shell wrapper with environment caching
 #
+# This script is originally used by the Ganga project for executing system commands.
+#
 # Usage:
 #
 # 
 # Initialisation: The shell script is sourced and the environment is captured
 #
-#     shell = Shell('/afs/cern.ch/project/gd/LCG-share/sl3/etc/profile.d/grid_env.sh')
+# shell = Shell('/afs/cern.ch/project/gd/LCG-share/sl3/etc/profile.d/grid_env.sh')
 #
 # Output is returned in a file
 # 
-#     rc,outfile,m=shell.cmd('edg-get-job-status -all')
+# rc,outfile,m=shell.cmd('edg-get-job-status -all')
 #
 # Output is returned as a string
 # 
@@ -32,187 +34,195 @@
 #
 #     fullpath=shell.wrapper('lcg-cp')
 
-import os, re, tempfile, time, signal
+import logging
+import os
+import re
+import tempfile
+import time
+import signal
 
-#import Ganga.Utility.logging
-#logger = Ganga.Utility.logging.getLogger()
-#from Ganga.Utility.Config import getConfig
-
-from utils.Common import *
-logger = getMyLogger(__name__)
 
 class Shell:
+    # exceptions=getConfig('Shell')['IgnoredVars']
+    exceptions = {}
 
-   #exceptions=getConfig('Shell')['IgnoredVars']
-   exceptions={}
+    # def __init__(self,setup=None, setup_args=[]):
+    def __init__(self, setup=None, setup_args=[], debug=False):
 
-   #def __init__(self,setup=None, setup_args=[]):
-   def __init__(self,setup=None, setup_args=[], debug=False):
-      
-      """The setup script is sourced (with possible arguments) and the
-      environment is captured. The environment variables are expanded
-      automatically (this is a fix for bug #44259: GangaLHCb tests fail due to
-      gridProxy check).
+        """The setup script is sourced (with possible arguments) and the
+        environment is captured. The environment variables are expanded
+        automatically (this is a fix for bug #44259: GangaLHCb tests fail due to
+        gridProxy check).
 
-      Example of variable expansion:
-      
-      os.environ['BAR'] = 'rabarbar'
-      os.environ['FOO'] = '$BAR'
-      s = Shell() # with or without the setup script
-      assert s.env['FOO'] == 'rabarbar' # NOT literal string '$BAR'
+        Example of variable expansion:
 
-      NOTE: the behaviour is not 100% bash compatible: undefined variables in
-      bash are empty strings, Shell() leaves the literals unchanged,so:
+        os.environ['BAR'] = 'rabarbar'
+        os.environ['FOO'] = '$BAR'
+        s = Shell() # with or without the setup script
+        assert s.env['FOO'] == 'rabarbar' # NOT literal string '$BAR'
 
-      os.environ['FOO'] = '$NO_BAR'
-      s = Shell()
-      if os.environ.not has_key('NO_BAR'):
-         assert s.env['FOO'] == '$NO_BAR'
-         
-      """
+        NOTE: the behaviour is not 100% bash compatible: undefined variables in
+        bash are empty strings, Shell() leaves the literals unchanged,so:
 
-      if debug:
-          logger.setLevel(logging.DEBUG)
+        os.environ['FOO'] = '$NO_BAR'
+        s = Shell()
+        if os.environ.not has_key('NO_BAR'):
+           assert s.env['FOO'] == '$NO_BAR'
 
-      def expand_vars(env):
-         tmp_dict = {}
-         for k,v in env.iteritems():
-            tmp_dict[k] = os.path.expandvars(v)
-         return tmp_dict
+        """
 
-      if setup:
-         pipe=os.popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)))
-         output=pipe.read()
-         rc=pipe.close()
-         if rc: logger.warning('Unexpected rc %d from setup command %s',rc,setup)
+        self.logger = logging.getLogger(self.__class__.__name__)
+        lh = logging.StreamHandler()
+        lh.setFormatter(logging.Formatter(fmt="[%(levelname)-8s:%(name)s.%(funcName)s] %(message)s"))
+        self.logger.addHandler(lh)
 
-         env = expand_vars(eval(output))
+        if debug:
+            self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger.setLevel(logging.WARNING)
 
-         for key in Shell.exceptions:
-            try:
-               del env[key]
-            except KeyError:
-               pass
-         self.env = env
-      else:
-         env=dict(os.environ) #bug #44334: Ganga/Utility/Shell.py does not save environ
-         self.env = expand_vars(env)
+        def expand_vars(env):
+            tmp_dict = {}
+            for k, v in env.iteritems():
+                tmp_dict[k] = os.path.expandvars(v)
+            return tmp_dict
 
-      self.dirname=None
+        if setup:
+            pipe = os.popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (
+                setup, " ".join(setup_args)))
+            output = pipe.read()
+            rc = pipe.close()
+            if rc:
+                self.logger.warning('Unexpected rc %d from setup command %s', rc, setup)
 
-   def cmd(self,cmd,soutfile=None,allowed_exit=[0], capture_stderr=False,timeout=None, mention_outputfile_on_errors=True):
-      "Execute an OS command and captures the stderr and stdout which are returned in a file"
- 
-      if not soutfile: soutfile=tempfile.mktemp('.out')
-         
-      logger.debug('Running shell command: %s' % cmd)
-      try:
-         t0 = time.time()
-         already_killed = False
-         timeout0 = timeout
-         pid = os.spawnve(os.P_NOWAIT,'/bin/sh',['/bin/sh','-c','%s > %s 2>&1' % (cmd,soutfile)],self.env)         
-         while 1:
-            wpid,sts = os.waitpid(pid,os.WNOHANG)
-            if wpid!=0:
-               if os.WIFSIGNALED(sts):
-                  rc = -os.WTERMSIG(sts)
-                  break
-               elif os.WIFEXITED(sts):
-                  rc = os.WEXITSTATUS(sts)
-                  break
-            if timeout and time.time()-t0>timeout:
-               logger.warning('Command interrupted - timeout %ss reached: %s', timeout0,cmd)
-               if already_killed:
-                  sig = signal.SIGKILL
-               else:
-                  sig = signal.SIGTERM
-               logger.debug('killing process %d with signal %d',pid,sig)
-               os.kill(pid,sig)
-               t0=time.time()
-               timeout = 5 # wait just 5 seconds before killing with SIGKILL
-               already_killed = True
-            time.sleep(0.1)            
+            env = expand_vars(eval(output))
 
-      except OSError, (num,text):
-         logger.warning( 'Problem with shell command: %s, %s', num,text)
-         rc = 255
-      
-      BYTES = 4096
-      if rc not in allowed_exit:
-         logger.warning('exit status [%d] of command %s',rc,cmd)
-         if mention_outputfile_on_errors:
-            logger.warning('full output is in file: %s',soutfile)
-         logger.warning('<first %d bytes of output>\n%s',BYTES,file(soutfile).read(BYTES))
-         logger.warning('<end of first %d bytes of output>',BYTES)
-         
-#FIXME /bin/sh might have also other error messages                                                                                            
-      m = None
-      if rc != 0:
-         m = re.search('command not found\n',file(soutfile).read())
-         if m: logger.warning('command %s not found',cmd)
-                                                                                                       
-      return rc,soutfile,m is None
+            for key in Shell.exceptions:
+                try:
+                    del env[key]
+                except KeyError:
+                    pass
+            self.env = env
+        else:
+            env = dict(os.environ)  #bug #44334: Ganga/Utility/Shell.py does not save environ
+            self.env = expand_vars(env)
 
-   def cmd1(self,cmd,allowed_exit=[0],capture_stderr=False,timeout=None):
-       "Executes an OS command and captures the stderr and stdout which are returned as a string"
-       
-       rc,outfile,m = self.cmd(cmd,None,allowed_exit,capture_stderr,timeout,mention_outputfile_on_errors=False)
-       output=file(outfile).read()
-       os.unlink(outfile)
-       
-       return rc,output, m
-       
-   def system(self,cmd,allowed_exit=[0], stderr_file=None):
-      """Execute on OS command. Useful for interactive commands. Stdout and Stderr are not
-      caputured and are passed on the caller.
+        self.dirname = None
 
-      stderr_capture may specify a name of a file to which stderr is redirected.
-      """
+    def cmd(self, cmd, soutfile=None, allowed_exit=[0], capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
+        """Execute an OS command and captures the stderr and stdout which are returned in a file"""
 
-      logger.debug('Running shell command: %s' % cmd)
+        if not soutfile: soutfile = tempfile.mktemp('.out')
 
-      if stderr_file:
-         cmd += " 2> %s"%stderr_file
-         
-      try:
-         rc = os.spawnve(os.P_WAIT,'/bin/sh',['/bin/sh','-c',cmd],self.env)
-      except OSError, (num,text):
-         logger.warning( 'Problem with shell command: %s, %s', num,text)
-         rc = 255
-      return rc
+        self.logger.debug('Running shell command: %s' % cmd)
+        try:
+            t0 = time.time()
+            already_killed = False
+            timeout0 = timeout
+            pid = os.spawnve(os.P_NOWAIT, '/bin/sh', ['/bin/sh', '-c', '%s > %s 2>&1' % (cmd, soutfile)], self.env)
+            while 1:
+                wpid, sts = os.waitpid(pid, os.WNOHANG)
+                if wpid != 0:
+                    if os.WIFSIGNALED(sts):
+                        rc = -os.WTERMSIG(sts)
+                        break
+                    elif os.WIFEXITED(sts):
+                        rc = os.WEXITSTATUS(sts)
+                        break
+                if timeout and time.time() - t0 > timeout:
+                    self.logger.warning('Command interrupted - timeout %ss reached: %s', timeout0, cmd)
+                    if already_killed:
+                        sig = signal.SIGKILL
+                    else:
+                        sig = signal.SIGTERM
+                    self.logger.debug('killing process %d with signal %d', pid, sig)
+                    os.kill(pid, sig)
+                    t0 = time.time()
+                    timeout = 5  # wait just 5 seconds before killing with SIGKILL
+                    already_killed = True
+                time.sleep(0.1)
 
-   def wrapper(self,cmd,preexecute=None):
-      """Write wrapper script for command
+        except OSError, (num, text):
+            self.logger.warning('Problem with shell command: %s, %s', num, text)
+            rc = 255
 
-      A wrapper around cmd is written including the setting of the environment.
-      Useful for situations where it is an external Python module that is
-      calling the command. It is callers responsibility to enter
-      new location into PATH as this might have external effects. Full path of
-      wrapper script is returned. Preexecute can contain extra commands to be
-      executed before cmd
+        BYTES = 4096
+        if rc not in allowed_exit:
+            self.logger.warning('exit status [%d] of command %s', rc, cmd)
+            if mention_outputfile_on_errors:
+                self.logger.warning('full output is in file: %s', soutfile)
+            self.logger.warning('<first %d bytes of output>\n%s', BYTES, file(soutfile).read(BYTES))
+            self.logger.warning('<end of first %d bytes of output>', BYTES)
 
-      fullpath = s.wrapper('lcg-cp', 'echo lcg-cp called with arguments $*'"""
+        # FIXME /bin/sh might have also other error messages
+        m = None
+        if rc != 0:
+            m = re.search('command not found\n', file(soutfile).read())
+            if m:
+                self.logger.warning('command %s not found', cmd)
 
-      #from Ganga.Utility.tempfile_compatibility import mkdtemp
-      from tempfile import mkdtemp
-      from os.path import join
+        return rc, soutfile, m is None
 
-      if not self.dirname:
-         self.dirname=mkdtemp()
-         
-      fullpath = join(self.dirname,cmd)
-      f = open(fullpath,'w')
-      f.write("#!/bin/bash\n")
-      for k,v in self.env.iteritems():
-         f.write("export %s='%s'\n" % (k,v))
-      if preexecute:
-         f.write("%s\n" % preexecute)
-      f.write("%s $*\n" % cmd)
-      f.close()
-      import stat,os
-      os.chmod(fullpath,stat.S_IRWXU)
+    def cmd1(self, cmd, allowed_exit=[0], capture_stderr=False, timeout=None):
+        """Executes an OS command and captures the stderr and stdout which are returned as a string"""
 
-      return fullpath
+        rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr, timeout, mention_outputfile_on_errors=False)
+        output = file(outfile).read()
+        os.unlink(outfile)
+
+        return rc, output, m
+
+    def system(self, cmd, allowed_exit=[0], stderr_file=None):
+        """Execute on OS command. Useful for interactive commands. Stdout and Stderr are not
+        caputured and are passed on the caller.
+
+        stderr_capture may specify a name of a file to which stderr is redirected.
+        """
+
+        self.logger.debug('Running shell command: %s' % cmd)
+
+        if stderr_file:
+            cmd += " 2> %s" % stderr_file
+
+        try:
+            rc = os.spawnve(os.P_WAIT, '/bin/sh', ['/bin/sh', '-c', cmd], self.env)
+        except OSError, (num, text):
+            self.logger.warning('Problem with shell command: %s, %s', num, text)
+            rc = 255
+        return rc
+
+    def wrapper(self, cmd, preexecute=None):
+        """Write wrapper script for command
+
+        A wrapper around cmd is written including the setting of the environment.
+        Useful for situations where it is an external Python module that is
+        calling the command. It is callers responsibility to enter
+        new location into PATH as this might have external effects. Full path of
+        wrapper script is returned. Preexecute can contain extra commands to be
+        executed before cmd
+
+        fullpath = s.wrapper('lcg-cp', 'echo lcg-cp called with arguments $*'"""
+
+        from tempfile import mkdtemp
+        from os.path import join
+
+        if not self.dirname:
+            self.dirname = mkdtemp()
+
+        fullpath = join(self.dirname, cmd)
+        f = open(fullpath, 'w')
+        f.write("#!/bin/bash\n")
+        for k, v in self.env.iteritems():
+            f.write("export %s='%s'\n" % (k, v))
+        if preexecute:
+            f.write("%s\n" % preexecute)
+        f.write("%s $*\n" % cmd)
+        f.close()
+        import stat, os
+
+        os.chmod(fullpath, stat.S_IRWXU)
+
+        return fullpath
 
 #
 #
