@@ -31,7 +31,7 @@ On the HPC cluster at DCCN, three scripts are prepared for managing the access p
 
 For general end-users, a tool called `prj_getacl` is used to show user roles of a given project.  For example, to list the user roles on project `3010000.01`, one does
 
-```Bash
+```bash
 $ prj_getacl 3010000.01
 +------------+---------------------+--------+-------------+--------+----------+
 |  project   |         path        | admin  | contributor |  user  | traverse |
@@ -52,38 +52,38 @@ The script support few optional arguments. Some usefule ones are listed in the f
 
 For the administrator, the tool called `prj_setacl` is used for altering user roles on a given project.  For example, to change the role of user `rendbru` from `Contributor` to `User` on project `3010000.01`.  One does
 
-```Bash
+```bash
 $ prj_setacl -u rendbru 3010000.01
 ```
 
 Similarly, setting `rendbru` back to the `Contributor` role, one does the following command:
 
-```Bash
+```bash
 $ prj_setacl -c rendbru 3010000.01
 ``` 
 
 To promote `rendbru` to the `Administrator` role, one uses the `-a` option then, e.g.
 
-```Bash
+```bash
 $ prj_setacl -a rendbru 3010000.01
 ```
 
 For removing an user from accessing a project, another tool called `prj_delacl` is used.  For example, if we want to remove the access right of `rendbru` from project `3010000.01`, one does
 
-```Bash
+```bash
 $ prj_delacl rendbru 3010000.01
 ```
 
 #### Controlling user role on sub-directories
 Although it's still experimental, it is possible to set/delete user role on sub-directory within a project directory, using the `-p` option of the `prj_setacl` and `prj_delacl` scripts. For example, granting user `edwger` with the `Contributor` role in the subdirectory `subject_001` within project `3010000.01` can be done as follows:
 
-```Bash
+```bash
 $ prj_setacl -p subject_001 -c edwger 3010000.01
 ```
 
 Note: One should note that changing and deleting user role is always applied recursively.
 
-##### The "Traverse" role
+#### The "Traverse" role
 When granting user a role in a sub-directory, a minimum permission in upper-level directories should also be given to the user to "pass through" the directory tree.  This minimum permission is given by assiging the user to the `Traverse` role.
 
 In practice, the assignment is more meaningful when it takes place at the time the user is given a role to a sub-directory, therefore, it is done via the `-t` option of the `prj_setacl` command.  For example, the following command gives user `rendbru` the `Contributor` role in the subdirectory `subject_001`, as well as the minimum permission (i.e. the `Traverse` role) to pass through the top-level directory of project `3010000.01`.
