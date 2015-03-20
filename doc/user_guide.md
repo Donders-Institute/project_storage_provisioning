@@ -44,7 +44,7 @@ The script support few optional arguments. Some usefule ones are listed in the f
 
 | Option       | Purpose                                                              |
 | -------------|----------------------------------------------------------------------|
-| `-h`         | print the help message and exit                                      |
+| `-h`         | print the help message with a full list of the command-line options  |
 | `-l LOGLEVEL`| set the verbosity of the log message in a level between `0` and `3`  |
 | `-p SUBDIR`  | retrieve the access right on a `SUBDIR` within the project directory |
 
