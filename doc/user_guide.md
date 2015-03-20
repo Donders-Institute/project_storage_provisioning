@@ -12,13 +12,14 @@ Data sharing within the project directory is controlled by a role-based mechanis
 
 ## User roles
 
-Users should be aware of the following three __roles__ defined for the access control.
+Users should be aware of the following four __roles__ defined for the access control.
 
 | Role              | Access right                                      |
 | ------------------|---------------------------------------------------|
 | __User__          | users in this role has read-only permission.      |
 | __Contributor__   | users in this role has read and write permission. |
 | __Administrator__ | users in this role has read, write permission and rights to grant/revoke roles of other users.|
+| __Traverse__      | This role is only relevent for a directory. Users in this role has permission to "pass through" a directory. It is similar to the `x`-bit of the linux filesystem permission. |
 
 Any user who wants to access data in a project directory must acquire one of the roles on the project. Users in the __Administrator__ role have rights to grant/revoke additional user roles. The project owner is the initial and the _de facto_ administrator of the project. 
 
@@ -32,18 +33,18 @@ For general end-users, a tool called `prj_getacl` is used to show user roles of 
 
 ```Bash
 $ prj_getacl 3010000.01
-+------------+---------------------+--------+-------------+--------+
-|  project   |         path        | admin  | contributor |  user  |
-+------------+---------------------+--------+-------------+--------+
-| 3010000.01 | /project/3010000.01 | honlee |   rendbru   | edwger |
-+------------+---------------------+--------+-------------+--------+
++------------+---------------------+--------+-------------+--------+----------+
+|  project   |         path        | admin  | contributor |  user  | traverse |
++------------+---------------------+--------+-------------+--------+----------+
+| 3010000.01 | /project/3010000.01 | honlee |    martyc   | edwger | rendbru  |
++------------+---------------------+--------+-------------+--------+----------+
 ```
 
 The script support few optional arguments. Some usefule ones are listed in the following table. 
 
 | Option       | Purpose                                                              |
 | -------------|----------------------------------------------------------------------|
-| `-h`         | print the help message and exit                                      |
+| `-h`         | print the help message with a full list of the command-line options  |
 | `-l LOGLEVEL`| set the verbosity of the log message in a level between `0` and `3`  |
 | `-p SUBDIR`  | retrieve the access right on a `SUBDIR` within the project directory |
 
@@ -74,10 +75,19 @@ $ prj_delacl rendbru 3010000.01
 ```
 
 #### Controlling user role on sub-directories
-Although it's still experimental, it is possible to set/delete user role on sub-directory within a project directory, using the `-p` option of the `prj_setacl` and `prj_delacl` scripts. For example, changing user `edwger` from the `User` role to `Contributor` role in the subdirectory `subject_001` within project `3010000.01` can be done as follows:
+Although it's still experimental, it is possible to set/delete user role on sub-directory within a project directory, using the `-p` option of the `prj_setacl` and `prj_delacl` scripts. For example, granting user `edwger` with the `Contributor` role in the subdirectory `subject_001` within project `3010000.01` can be done as follows:
 
 ```Bash
 $ prj_setacl -p subject_001 -c edwger 3010000.01
 ```
 
 Note: One should note that changing and deleting user role is always applied recursively.
+
+##### The "Traverse" role
+When granting user a role in a sub-directory, a minimum permission in upper-level directories should also be given to the user to "pass through" the directory tree.  This minimum permission is given by assiging the user to the `Traverse` role.
+
+In practice, the assignment is more meaningful when it takes place at the time the user is given a role to a sub-directory, therefore, it is done via the `-t` option of the `prj_setacl` command.  For example, the following command gives user `rendbru` the `Contributor` role in the subdirectory `subject_001`, as well as the minimum permission (i.e. the `Traverse` role) to pass through the top-level directory of project `3010000.01`.
+
+```bash
+$ prj_setacl -t -p subject_001 -c rendbru 3010000.01
+```
