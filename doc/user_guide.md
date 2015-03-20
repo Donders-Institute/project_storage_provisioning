@@ -83,7 +83,7 @@ $ prj_setacl -p subject_001 -c edwger 3010000.01
 
 Note: One should note that changing and deleting user role is always applied recursively.
 
-#### The "Traverse" role
+##### The "Traverse" role
 When granting user a role to a sub-directory, a minimum permission on upper-level directories should also be given to the user to "pass through" the directory tree.  This minimum permission is given by assiging the user to the `Traverse` role.
 
 In practice, the assignment is more meaningful when it takes place at the time the user is given a role to a sub-directory, therefore, it is done via the `-t` option of the `prj_setacl` command.  For example, the following command gives user `rendbru` the `Contributor` role in the subdirectory `subject_001`, as well as the minimum permission to pass through the top-level directory of project `3010000.01`.
