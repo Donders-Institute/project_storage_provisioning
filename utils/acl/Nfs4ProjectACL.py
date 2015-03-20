@@ -363,9 +363,11 @@ class Nfs4ProjectACL(ProjectACL):
         cmd += '"%s" %s' % (', '.join(map(lambda x: x.__str__(), aces)), path)
 
         s = Shell()
-        rc, output, m = s.cmd1(cmd, allowed_exit=[0,255], timeout=None)
+        rc, outfile, m = s.cmd(cmd, allowed_exit=[0,255], timeout=None, mention_outputfile_on_errors=True)
         if rc != 0:
             self.logger.error('%s failed' % cmd)
+        else:
+            os.unlink(outfile)
 
         # cleanup lock file regardless the result
         try:
