@@ -58,6 +58,12 @@ if __name__ == "__main__":
                       default = False,
                       help    = 'force updating the ACL even the user is already in the given role, useful for fixing ACL table')
 
+    parg.add_argument('-L','--logical',
+                      action  = 'store_true',
+                      dest    = 'force',
+                      default = False,
+                      help    = 'follow logical (symbolic) links')
+
     parg.add_argument('-d','--basedir',
                       action  = 'store',
                       dest    = 'basedir',
@@ -139,7 +145,8 @@ if __name__ == "__main__":
         if os.path.exists(p):
             logger.info('setting file or directory: %s' % p)
 
-            fs.setRoles(re.sub(r'^%s/' % fs.project_root, '', args.subdir), users=_l_user, contributors=_l_contrib, admins=_l_admin, force=args.force, traverse=args.traverse)
+            fs.setRoles(re.sub(r'^%s/' % fs.project_root, '', args.subdir), users=_l_user, contributors=_l_contrib,
+                        admins=_l_admin, force=args.force, traverse=args.traverse, logical=args.logical)
 
         else:
             logger.error('file or directory not found: %s' % p)

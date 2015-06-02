@@ -16,7 +16,8 @@ class ProjectACL:
         self.project_root = project_root
         self.logger = getLogger(name=self.__class__.__name__, lvl=lvl)
 
-    def setRoles(self, path='', users=[], contributors=[], admins=[], recursive=True, force=False, traverse=False):
+    def setRoles(self, path='', users=[], contributors=[], admins=[], recursive=True, force=False, traverse=False,
+                 logical=False):
         """
         sets users to the roles: user, contributor, administrator
         :param path: the file system path relative to the project_root
@@ -26,6 +27,7 @@ class ProjectACL:
         :param force: force to set roles even the users are already in the target role
         :param recursive: True if the role setting is applied recursivly, otherwise False
         :param traverse: True if ensuring the uid has proper right to traverse through parent directories
+        :param logical: set True to follow symbolic links
         :return: True in success, otherwise False
         """
         raise NotImplementedError
@@ -39,13 +41,14 @@ class ProjectACL:
         """
         raise NotImplementedError
 
-    def delUsers(self, path='', users=[], recursive=True, force=False):
+    def delUsers(self, path='', users=[], recursive=True, force=False, logical=False):
         """
         deletes specified users from accessing to the given path
         :param path: the file system path relative to the project_root
         :param users: a list of user ids
         :param recursive: True if the user deletion is applied recursively, otherwiser False
         :param force: force to delete users even the users are not presented in any roles
+        :param logical: set to True to follow symbolic links
         :return: True in success, otherwise False
         """
         raise NotImplementedError
