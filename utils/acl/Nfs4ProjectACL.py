@@ -5,6 +5,7 @@ import pwd
 import datetime
 import socket
 import re
+import time
 from utils.acl.RoleData import RoleData
 from utils.acl.ACE import ACE
 from utils.acl.ProjectACL import ProjectACL
@@ -379,6 +380,10 @@ class Nfs4ProjectACL(ProjectACL):
         # cleanup lock file regardless the result
         try:
             os.remove(lock_fpath)
+
+            # backup the lock file for debug purpose
+            #lock_fpath_bak = '%s.%s' % (lock_fpath, time.ctime())
+            #os.rename(lock_fpath, lock_fpath_bak)
         except:
             pass
 
