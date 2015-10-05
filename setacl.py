@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     parg.add_argument('-L','--logical',
                       action  = 'store_true',
-                      dest    = 'force',
+                      dest    = 'logical',
                       default = False,
                       help    = 'follow logical (symbolic) links')
 
