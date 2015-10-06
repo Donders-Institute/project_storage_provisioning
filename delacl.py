@@ -45,6 +45,12 @@ if __name__ == "__main__":
                       default = False,
                       help    = 'force deleting user from ACL even there is no ACE related to the user, useful for fixing ACL table')
 
+    parg.add_argument('-b','--batch',
+                      action  = 'store_true',
+                      dest    = 'batch',
+                      default = False,
+                      help    = 'deleting user from ACL in batch mode, using a cluster job')
+
     parg.add_argument('-L','--logical',
                       action  = 'store_true',
                       dest    = 'logical',
@@ -96,5 +102,8 @@ if __name__ == "__main__":
             p = os.path.join(fs.project_root, re.sub(r'^%s/' % fs.project_root, '', args.subdir))
 
         if os.path.exists(p):
-            if not fs.delUsers(re.sub(r'^%s/' % fs.project_root, '', args.subdir), _l_user, force=args.force, logical=args.logical):
+            out = fs.delUsers(re.sub(r'^%s/' % fs.project_root, '', args.subdir), _l_user, force=args.force, logical=args.logical, batch=args.batch)
+            if not out:
                 logger.error('fail to remove %s from project %s.' % (','.join(_l_user), id))
+            elif args.batch:
+                print('batch job for deleting user from ACL submitted: %s' % out)

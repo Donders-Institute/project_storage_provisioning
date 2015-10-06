@@ -58,6 +58,12 @@ if __name__ == "__main__":
                       default = False,
                       help    = 'force updating the ACL even the user is already in the given role, useful for fixing ACL table')
 
+    parg.add_argument('-b','--batch',
+                      action  = 'store_true',
+                      dest    = 'batch',
+                      default = False,
+                      help    = 'updating the ACL in batch mode, using a cluster job')
+
     parg.add_argument('-L','--logical',
                       action  = 'store_true',
                       dest    = 'logical',
@@ -145,8 +151,10 @@ if __name__ == "__main__":
         if os.path.exists(p):
             logger.info('setting file or directory: %s' % p)
 
-            fs.setRoles(re.sub(r'^%s/' % fs.project_root, '', args.subdir), users=_l_user, contributors=_l_contrib,
-                        admins=_l_admin, force=args.force, traverse=args.traverse, logical=args.logical)
+            out = fs.setRoles(re.sub(r'^%s/' % fs.project_root, '', args.subdir), users=_l_user, contributors=_l_contrib,
+                              admins=_l_admin, force=args.force, traverse=args.traverse, logical=args.logical, batch=args.batch)
 
+            if args.batch and out:
+                print('batch job for setting ACL submitted: %s' % out)
         else:
             logger.error('file or directory not found: %s' % p)
