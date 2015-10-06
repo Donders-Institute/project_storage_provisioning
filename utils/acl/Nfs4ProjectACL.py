@@ -393,8 +393,7 @@ rm -f $setacl_lock
         job_s = job_template.format(job_name = job_name, queue=queue, prj_root = re.sub('/*$','',self.project_root), setacl_cmd = setacl_cmd)
         self.logger.debug(job_s)
 
-        f = tempfile.mkstemp(prefix='prj_setacl_')
-        n = f.name
+        f, n = tempfile.mkstemp(prefix='prj_setacl_')
         f.write(job_s)
         f.close()
 
