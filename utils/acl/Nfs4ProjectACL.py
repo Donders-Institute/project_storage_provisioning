@@ -372,21 +372,21 @@ class Nfs4ProjectACL(ProjectACL):
 #PBS -m ae
 #
 prj_root="{prj_root}"
-setacl_lock=${prj_root}/.setacl_lock
+setacl_lock=$prj_root/.setacl_lock
 
-if [ -f ${setacl_lock} ]; then
-    echo "cannot setacl as lock file ${setacl_lock} has been acquired by other process" 1>&2
+if [ -f $setacl_lock ]; then
+    echo "cannot setacl as lock file $setacl_lock has been acquired by other process" 1>&2
     exit 1
 fi
 
 ## create lock file
-touch ${setacl_lock}
+touch $setacl_lock
 
 ## run setacl cmd
 {setacl_cmd}
 
 ## release the lock file
-rm -f ${setacl_lock}
+rm -f $setacl_lock
         """
 
         # compose a temporary file and submit it via qsub command
