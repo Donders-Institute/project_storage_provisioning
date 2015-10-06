@@ -5,7 +5,7 @@ import pwd
 import datetime
 import socket
 import re
-import time
+import tempfile
 from utils.acl.RoleData import RoleData
 from utils.acl.ACE import ACE
 from utils.acl.ProjectACL import ProjectACL
@@ -74,7 +74,7 @@ class Nfs4ProjectACL(ProjectACL):
         pass
 
     def setRoles(self, path='', users=[], contributors=[], admins=[], recursive=True, force=False, traverse=False,
-                 logical=False):
+                 logical=False, batch=False):
 
         path = os.path.join(self.project_root, path)
 
@@ -141,9 +141,12 @@ class Nfs4ProjectACL(ProjectACL):
         if logical:
             _opts.insert(0, '-L')
 
-        return self.__nfs4_setfacl__(path, n_aces, _opts)
+        if batch:
+            return self.__nfs4_setfacl_qsub__(path, n_aces, _opts)
+        else:
+            return self.__nfs4_setfacl__(path, n_aces, _opts)
 
-    def delUsers(self, path='', users=[], recursive=True, force=False, logical=False):
+    def delUsers(self, path='', users=[], recursive=True, force=False, logical=False, batch=False):
 
         path = os.path.join(self.project_root, path)
 
@@ -188,7 +191,10 @@ class Nfs4ProjectACL(ProjectACL):
         if logical:
             _opts.insert(0, '-L')
 
-        return self.__nfs4_setfacl__(path, n_aces, _opts)
+        if batch:
+            return self.__nfs4_setfacl_qsub__(path, n_aces, _opts)
+        else:
+            return self.__nfs4_setfacl__(path, n_aces, _opts)
 
     def mapACEtoRole(self, ace):
         diff = {}
@@ -329,6 +335,80 @@ class Nfs4ProjectACL(ProjectACL):
                 self.logger.warning('ignore ACE for invalid user: %s' % u)
 
         return n_aces
+
+    def __nfs4_setfacl_qsub__(self, path, aces, options=None, queue='batch'):
+        """
+        wrapper for submitting nfs4_setfacl command as a batch job in the cluster
+        :param path: the path on which the given ACEs will be applied
+        :param aces: a list of ACE objects
+        :param queue: the targeting job queue
+        :param options: command-line options for nfs4_setfacl command
+        :return: a valid job id if the submission succeed, otherwise False
+        """
+
+        aces = self.__curateACE__(aces)
+
+        self.logger.debug('***** new ACL to set *****')
+        for a in aces:
+            self.logger.debug(a)
+
+        if options:
+            setacl_cmd = 'nfs4_setfacl %s ' % ' '.join(options)
+        else:
+            setacl_cmd = 'nfs4_setfacl '
+
+        setacl_cmd += '"%s" %s' % (', '.join(map(lambda x: x.__str__(), aces)), path)
+
+        # workaround for NetApp for the path is actually the root of the volume
+        if os.path.isdir(path) and path[-1] is not '/':
+            path += '/'
+
+        # compose job
+        job_id = None
+        job_name = 'setacl_%s' % os.path.basename(re.sub('/*$','',self.project_root))
+        job_template = """#PBS -N {job_name}
+#PBS -l walltime=06:00:00,mem=2gb
+#PBS -q {queue}
+#PBS -m ae
+#
+prj_root="{prj_root}"
+setacl_lock=${prj_root}/.setacl_lock
+
+if [ -f ${setacl_lock} ]; then
+    echo "cannot setacl as lock file ${setacl_lock} has been acquired by other process" 1>&2
+    exit 1
+fi
+
+## create lock file
+touch ${setacl_lock}
+
+## run setacl cmd
+{setacl_cmd}
+
+## release the lock file
+rm -f ${setacl_lock}
+        """
+
+        # compose a temporary file and submit it via qsub command
+        job_s = job_template.format(job_name = job_name, queue=queue, prj_root = re.sub('/*$','',self.project_root), setacl_cmd = setacl_cmd)
+        self.logger.debug(job_s)
+
+        f = tempfile.mkstemp(prefix='prj_setacl_')
+        n = f.name
+        f.write(job_s)
+        f.close()
+
+        # submit the job with 120 seconds timeout
+        s = Shell()
+        cmd = 'qsub %s' % n
+        rc, output, m = s.cmd1(cmd, timeout=120)
+        if rc != 0:
+            self.logger.error('fail to submit job %s' % cmd)
+            self.logger.error(output)
+        else:
+            job_id = output
+
+        return job_id
 
     def __nfs4_setfacl__(self, path, aces, options=None):
         """
