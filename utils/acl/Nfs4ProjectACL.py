@@ -5,6 +5,7 @@ import pwd
 import datetime
 import socket
 import re
+import inspect
 from tempfile import NamedTemporaryFile
 from utils.acl.RoleData import RoleData
 from utils.acl.ACE import ACE
@@ -365,7 +366,7 @@ class Nfs4ProjectACL(ProjectACL):
 
         # compose job
         job_id = None
-        job_name = 'setacl_%s' % os.path.basename(re.sub('/*$','',self.project_root))
+        job_name = '%s_%s' % (inspect.stack()[1][3], os.path.basename(re.sub('/*$','',self.project_root)))
         job_template = """#PBS -N {job_name}
 #PBS -l walltime=06:00:00,mem=2gb
 #PBS -q {queue}
