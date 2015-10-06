@@ -5,7 +5,7 @@ import pwd
 import datetime
 import socket
 import re
-import tempfile
+from tempfile import NamedTemporaryFile
 from utils.acl.RoleData import RoleData
 from utils.acl.ACE import ACE
 from utils.acl.ProjectACL import ProjectACL
@@ -393,7 +393,8 @@ rm -f $setacl_lock
         job_s = job_template.format(job_name = job_name, queue=queue, prj_root = re.sub('/*$','',self.project_root), setacl_cmd = setacl_cmd)
         self.logger.debug(job_s)
 
-        f, n = tempfile.mkstemp(prefix='prj_setacl_')
+        f = NamedTemporaryFile(mode='w', prefix='prj_setacl_', delete=False)
+        n = f.name
         f.write(job_s)
         f.close()
 
@@ -406,6 +407,9 @@ rm -f $setacl_lock
             self.logger.error(output)
         else:
             job_id = output
+
+        # remove the temporary file for job script
+        os.unlink(n)
 
         return job_id
 
