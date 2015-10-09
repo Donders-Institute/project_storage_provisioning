@@ -20,8 +20,8 @@ if __name__ == "__main__":
     parg = ArgumentParser(description='sets/adds access rights to project storage', version="0.1")
 
     ## positional arguments
-    parg.add_argument('pid',
-                      metavar = 'pid',
+    parg.add_argument('prj_id',
+                      metavar = 'prj_id',
                       nargs   = '+',
                       help    = 'the project id')
 
@@ -34,9 +34,9 @@ if __name__ == "__main__":
                       default = 0,
                       help    = 'set one of the following verbosity levels. 0|default:WARNING, 1:ERROR, 2:INFO, 3:DEBUG')
 
-    parg.add_argument('-u','--user',
+    parg.add_argument('-u','--viewer',
                       action  = 'store',
-                      dest    = 'users',
+                      dest    = 'viewers',
                       default = '',
                       help    = 'set list of system uids separated by "," for the user role')
 
@@ -46,9 +46,9 @@ if __name__ == "__main__":
                       default = '',
                       help    = 'set list of system uids separated by "," for the contributor role')
 
-    parg.add_argument('-a','--admin',
+    parg.add_argument('-m','--manager',
                       action  = 'store',
-                      dest    = 'admins',
+                      dest    = 'managers',
                       default = '',
                       help    = 'set list of system uids separated by "," for the admin role')
 
@@ -101,19 +101,15 @@ if __name__ == "__main__":
     # check if setting ACL on subdirectories is supported for the projects in question
     if args.subdir:
         subdir_enabled = cfg.get('PPS', 'PRJ_SUBDIR_ENABLED').split(',')
-        for id in args.pid:
+        for id in args.prj_id:
             if id not in subdir_enabled:
                 logger.error('Setting ACL on subdirecty not allowed: %s' % id)
                 # TODO: consolidate the exit codes
                 sys.exit(1)
 
-    args.admins        = args.admins.strip()
-    args.users         = args.users.strip()
-    args.contributors  = args.contributors.strip()
-
-    _l_admin    = csvArgsToList(args.admins)
-    _l_user     = csvArgsToList(args.users)
-    _l_contrib  = csvArgsToList(args.contributors)
+    _l_admin    = csvArgsToList(args.managers.strip())
+    _l_user     = csvArgsToList(args.viewers.strip())
+    _l_contrib  = csvArgsToList(args.contributors.strip())
 
     ## there is no reason to set yourself for admin, user, contributor
     ## since the you should have been the admin to run this program
@@ -139,7 +135,7 @@ if __name__ == "__main__":
 
     fs = Nfs4ProjectACL('', lvl=args.verbose)
 
-    for id in args.pid:
+    for id in args.prj_id:
 
         p = os.path.join(args.basedir, id)
         fs.project_root = p

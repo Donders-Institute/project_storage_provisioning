@@ -25,8 +25,8 @@ if __name__ == "__main__":
                       nargs   = 1,
                       help    = 'a list of the system user id separated by ","')
 
-    parg.add_argument('pid',
-                      metavar = 'pid',
+    parg.add_argument('prj_id',
+                      metavar = 'prj_id',
                       nargs   = '+',
                       help    = 'the project id')
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     # check if setting ACL on subdirectories is supported for the projects in question
     if args.subdir:
         subdir_enabled = cfg.get('PPS', 'PRJ_SUBDIR_ENABLED').split(',')
-        for id in args.pid:
+        for id in args.prj_id:
             if id not in subdir_enabled:
                 logger.error('Setting ACL on subdirecty not allowed: %s' % id)
                 # TODO: consolidate the exit codes
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     fs = Nfs4ProjectACL('',lvl=args.verbose)
 
-    for id in args.pid:
+    for id in args.prj_id:
         p = os.path.join(args.basedir, id)
         fs.project_root = p
 

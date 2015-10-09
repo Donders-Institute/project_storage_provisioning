@@ -22,8 +22,8 @@ if __name__ == "__main__":
     parg = ArgumentParser(description='gets access rights of project storages', version="0.1")
 
     ## positional arguments
-    parg.add_argument('pid',
-                      metavar = 'pid',
+    parg.add_argument('prj_id',
+                      metavar = 'prj_id',
                       nargs   = '*',
                       help    = 'the project id')
 
@@ -52,12 +52,12 @@ if __name__ == "__main__":
 
     logger = getMyLogger(name=os.path.basename(__file__), lvl=args.verbose)
 
-    if not args.pid:
-        args.pid = os.listdir(args.basedir)
+    if not args.prj_id:
+        args.prj_id = os.listdir(args.basedir)
 
     roles = {}
     fs = Nfs4ProjectACL('', lvl=args.verbose)
-    for id in args.pid:
+    for id in args.prj_id:
         p = os.path.join(args.basedir, id)
 
         plist = []
