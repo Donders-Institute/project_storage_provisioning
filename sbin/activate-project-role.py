@@ -11,7 +11,7 @@ from utils.Common import getConfig, getMyLogger
 from utils.IStorage import StorageType, createProjectDirectory
 from utils.IProjectDB import getDBConnectInfo, setProjectRoleConfigActions, getProjectRoleConfigActions, updateProjectDatabase
 from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
-
+from utils.acl.UserRole import ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_USER
 
 # execute the main program
 if __name__ == "__main__":
@@ -114,13 +114,13 @@ if __name__ == "__main__":
         # perform set ACL action
         logger.info('  |-> performing set ACL on project: %s' % pid)
         _set_a     = filter(lambda x:x.action=='set' , p_actions)
-        _l_admin   = map(lambda x:x.uid, filter(lambda x:x.role=='admin'      , _set_a))
-        _l_user    = map(lambda x:x.uid, filter(lambda x:x.role=='user'       , _set_a))
-        _l_contrib = map(lambda x:x.uid, filter(lambda x:x.role=='contributor', _set_a))
+        _l_admin   = map(lambda x:x.uid, filter(lambda x:x.role==ROLE_ADMIN      , _set_a))
+        _l_user    = map(lambda x:x.uid, filter(lambda x:x.role==ROLE_USER       , _set_a))
+        _l_contrib = map(lambda x:x.uid, filter(lambda x:x.role==ROLE_CONTRIBUTOR, _set_a))
 
-        logger.info('  |- set admin role: %s'       % repr(_l_admin))
-        logger.info('  |- set contributor role: %s' % repr(_l_contrib))
-        logger.info('  |- set user role: %s'        % repr(_l_user))
+        logger.info('  |- set %s role: %s' % (ROLE_ADMIN, repr(_l_admin)))
+        logger.info('  |- set %s role: %s' % (ROLE_CONTRIBUTOR, repr(_l_contrib)))
+        logger.info('  |- set %s role: %s' % (ROLE_USER, repr(_l_user)))
 
         rc = True
         fs.project_root = p_dir

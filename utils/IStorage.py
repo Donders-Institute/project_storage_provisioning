@@ -2,6 +2,7 @@
 import grp
 import operator
 
+from utils.Common import getMyLogger
 from utils.Shell import *
 
 StorageType = {'fs_dir':0, 'netapp_volume':1}
@@ -103,7 +104,7 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
    
         cmd  = 'volume create -vserver atreides -volume %s -aggregate %s -size %s -user %s -group %s -junction-path %s' % (vol_name, g_aggr['name'], quota, ouid, ogid, fpath)
         cmd += ' -security-style unix -unix-permissions 0550 -state online -autosize false -foreground true'
-        cmd += ' -policy dccn-nfs -space-guarantee none -snapshot-policy none -type RW -antivirus-on-access-policy default'
+        cmd += ' -policy dccn-project -space-guarantee none -snapshot-policy none -type RW -antivirus-on-access-policy default'
         cmd += ' -percent-snapshot-space 0'
 
         logger.debug('cmd creating volume: %s' % cmd)
