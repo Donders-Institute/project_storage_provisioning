@@ -63,9 +63,12 @@ class Nfs4ProjectACL(ProjectACL):
                 # exclude the default principles
                 u = ace.principle.split('@')[0]
                 if u not in self.default_principles and ace.type in ['A']:
-                    r = self.mapACEtoRole(ace)
-                    rdata.addUserToRole(r, u)
-                    self.logger.debug('user %s: permission %s, role %s' % (u, ace.mask, r))
+                    if self.__userExist__(u):
+                        r = self.mapACEtoRole(ace)
+                        rdata.addUserToRole(r, u)
+                        self.logger.debug('user %s: permission %s, role %s' % (u, ace.mask, r))
+                    else:
+                        self.logger.warning('invalid system user %s: permission %s, role %s' % (u, ace.mask, r))
 
             roles.append(rdata)
 
