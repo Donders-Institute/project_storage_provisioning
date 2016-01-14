@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
                 # content of the email
                 _parts = {'plain':cfg.get('MAILER','EMAIL_TEMPLATE_PROJECT_INIT')}
-                _parts['plain'] = _parts['plain'].replace('@@NL@@','').replace('PROJECTOWNER', owner['name']).replace('PROJECTID', pid)
+                _parts['plain'] = _parts['plain'].replace('@@NL@@','').replace('@@PROJECTOWNER@@', owner['name']).replace('@@PROJECTID@@', pid)
 
                 # send email
                 mailer.sendMultipartEmail(subject=subject, fromAddress=cfg.get('MAILER','EMAIL_FROM_ADDRESS'), toAddress=toAddress, parts=_parts)
