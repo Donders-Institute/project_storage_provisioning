@@ -213,6 +213,74 @@ def getProjectRoleConfigActions(db_host, db_uid, db_pass, db_name, lvl=0):
 
     return actions
 
+def getProjectOwner(db_host, db_uid, db_pass, db_name, pid, lvl=0):
+    '''retrieve project owner information (name and email)
+    '''
+
+    logger = getMyLogger(lvl=lvl)
+ 
+    actions=[]
+
+    if not mdb:
+        logger.error('No MySQL library available.  Function disabled.')
+    else:
+        ## TODO: make connection to MySQL, prepare and execute SQL statement
+        cnx = __getMySQLConnector__(db_host, db_uid, db_pass, db_name, lvl=lvl)
+        if not cnx:
+            logger.error('Project DB connection failed')
+            return
+        else:
+            crs = None
+
+            try:
+                ## in this case, we are using MySQLdb 
+                ##  - disable autocommit that is by default enabled in MySQLdb package
+                cnx.autocommit(False)
+            except Exception:
+                ## in this case, we are using mysql.connector
+                ##  - the mysql.connector doesn't have the autocommit function;
+                ##    but the transaction is enabled by default, and autocommit set to False.
+                ##  - we set autocommit to False anyway.
+                cnx.autocommit = False
+
+            try:
+                ## get the db cursor
+                crs = cnx.cursor()
+            
+                ## select actions that are not activted 
+                qry = 'SELECT owner_name, owner_email FROM projects as b WHERE b.id = \'%s\'' % pid
+
+                crs.execute(qry)
+
+                # TODO: fix this
+                owner = {}
+                for (owner_name, owner_email) in crs:
+                    owner['name'] = owner_name
+                    owner['email'] = owner_email
+
+            except Exception, e:
+                logger.exception('Project DB select failed')
+            else:
+                ## everything is fine
+                logger.info('Project DB select succeeded')
+            finally:
+                ## close db cursor
+                try:
+                    crs.close()
+                except Exception, e:
+                    pass
+
+                ## close db connection
+                try:
+                    cnx.close()
+                except Exception, e:
+                    pass
+
+    ## showing the owner of the project
+    logger.debug('project owner: %s, email: %s' % (owner['name'], owner['email'])
+    
+    return owner
+
 def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
     ''' update project roles in the project database 
     '''
