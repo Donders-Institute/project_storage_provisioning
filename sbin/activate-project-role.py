@@ -83,6 +83,7 @@ if __name__ == "__main__":
         p_dir = os.path.join(args.basedir, pid)
 
         # create project directory if not available
+        isInit = False
         if not os.path.exists( p_dir ):
 
             rc    = True
@@ -110,6 +111,8 @@ if __name__ == "__main__":
                 if not os.path.exists( p_dir ):
                     logger.error('created directory not available: %s' % p_dir)
                     continue
+                else:
+                    isInit = True
                     
         # perform set ACL action
         logger.info('  |-> performing set ACL on project: %s' % pid)
@@ -158,3 +161,8 @@ if __name__ == "__main__":
 
         # updating project DB database with the currently activated user roles
         updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)
+        
+        # TODO: send email to project owner
+        # - get project owner email
+        # - compose html email (if isInit is True, notify user the project storage is created)
+        # - send via service email account
