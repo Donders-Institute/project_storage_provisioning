@@ -8,8 +8,9 @@ from argparse import ArgumentParser
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 from utils.Common import getConfig, getMyLogger
+from utils.IMailer import SMTPMailer
 from utils.IStorage import StorageType, createProjectDirectory
-from utils.IProjectDB import getDBConnectInfo, setProjectRoleConfigActions, getProjectRoleConfigActions, updateProjectDatabase
+from utils.IProjectDB import getDBConnectInfo, setProjectRoleConfigActions, getProjectRoleConfigActions, updateProjectDatabase, getProjectOwner
 from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 from utils.acl.UserRole import ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_USER
 
@@ -162,7 +163,34 @@ if __name__ == "__main__":
         # updating project DB database with the currently activated user roles
         updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)
         
-        # TODO: send email to project owner
+        # send email to project owner if it's a creation of the project
         # - get project owner email
         # - compose html email (if isInit is True, notify user the project storage is created)
         # - send via service email account
+        if isInit:
+            owner = getProjectOwner(db_host, db_uid, db_pass, db_name, pid, lvl=args.verbose)
+
+            if owner and owner['email']:
+                smtp_host = cfg.get('MAILER','SMTP_HOST')
+                smtp_port = cfg.get('MAILER','SMTP_PORT')
+                smtp_user = cfg.get('MAILER','SMTP_USERNAME')
+                smtp_pass = cfg.get('MAILER','SMTP_PASSWORD')
+
+                smtp_credential = None
+                if smtp_user and smtp_pass:
+                    smtp_credential = {'username': smtp_user, 'password': smtp_pass}
+
+                mailer = SMTPMailer(host=smtp_host, port=smtp_port, credential=smtp_credential, lvl=args.verbose)
+
+                subject = 'Storage of your project %s initialised' % pid
+                toAddress = '%s <%s>' % ( owner['name'], owner['email'] )
+
+                # content of the email
+                _parts = {'plain':cfg.get('MAILER','EMAIL_TEMPLATE_PROJECT_INIT')}
+                _parts['plain'] = _parts['plain'].replace('@@NL@@','').replace('PROJECTOWNER', owner['name']).replace('PROJECTID', pid)
+
+                # send email
+                mailer.sendMultipartEmail(subject=subject, fromAddress=cfg.get('MAILER','EMAIL_FROM_ADDRESS'), toAddress=toAddress, parts=_parts)
+
+            else:
+                logger.warn('project owner (email) unknown: %s %s' % (pid, repr(owner)))

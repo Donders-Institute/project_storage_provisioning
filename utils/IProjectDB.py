@@ -247,15 +247,15 @@ def getProjectOwner(db_host, db_uid, db_pass, db_name, pid, lvl=0):
                 ## get the db cursor
                 crs = cnx.cursor()
             
-                ## select actions that are not activted 
-                qry = 'SELECT owner_name, owner_email FROM projects as b WHERE b.id = \'%s\'' % pid
+                ## select actions that are not activted
+                qry = 'SELECT a.id, a.email, a.firstName, a.lastName FROM users as a, projects as b WHERE a.id = b.owner_id AND b.id = \'%s\'' % pid
 
                 crs.execute(qry)
 
                 # TODO: fix this
                 owner = {}
-                for (owner_name, owner_email) in crs:
-                    owner['name'] = owner_name
+                for (owner_id, owner_email, owner_first_name, owner_last_name) in crs:
+                    owner['name'] = '%s %s' % (owner_first_name, owner_last_name)
                     owner['email'] = owner_email
 
             except Exception, e:
@@ -277,7 +277,7 @@ def getProjectOwner(db_host, db_uid, db_pass, db_name, pid, lvl=0):
                     pass
 
     ## showing the owner of the project
-    logger.debug('project owner: %s, email: %s' % (owner['name'], owner['email'])
+    logger.debug('project owner: %s, email: %s' % (owner['name'], owner['email']))
     
     return owner
 

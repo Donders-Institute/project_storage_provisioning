@@ -51,7 +51,14 @@ def getConfig(config_file='config.ini'):
         'PDB_USER'         : '',
         'PDB_PASSWORD'     : '',
         'PDB_HOST'         : '',
-        'PDB_DATABASE'     : ''
+        'PDB_DATABASE'     : '',
+        # Email notification
+        'SMTP_HOST'         : 'localhost',
+        'SMTP_PORT'         : 25,
+        'SMTP_USERNAME'     : '',
+        'SMTP_PASSWORD'     : '',
+        'EMAIL_FROM_ADDRESS': 'TG helpdesk <helpdesk@fcdonders.ru.nl>',
+        'TEMPLATE_PROJECT_INIT': ''
     }
 
     config = ConfigParser.SafeConfigParser(default_cfg)
