@@ -130,7 +130,7 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
         vol_name = 'project_%s' % fpath.split('/')[-1].replace('.','_')
    
         cmd  = 'volume create -vserver atreides -volume %s -aggregate %s -size %s -user %s -group %s -junction-path %s' % (vol_name, g_aggr['name'], quota, ouid, ogid, fpath)
-        cmd += ' -security-style unix -unix-permissions 0550 -state online -autosize false -foreground true'
+        cmd += ' -security-style unix -unix-permissions 0750 -state online -autosize false -foreground true'
         cmd += ' -policy dccn-projects -qos-policy-group %s -space-guarantee none -snapshot-policy none -type RW' % qos_policy_group
         cmd += ' -percent-snapshot-space 0'
 
