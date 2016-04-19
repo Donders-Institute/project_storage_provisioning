@@ -8,7 +8,7 @@ me=`basename $0`
 ## checking whether the environment module is loaded
 module list > /dev/null 2>&1
 if [ $? != 0 ]; then
-    source /opt/_module/setup.sh
+    source /opt/_modules/setup.sh
     module load cluster
 fi
 
