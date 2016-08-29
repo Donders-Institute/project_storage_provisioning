@@ -336,7 +336,11 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
                 if data2:
                     for d in data2:
                         logger.debug(qry2 % d)
-                        crs.execute(qry2, d)
+                        try:
+                            crs.execute(qry2, d)
+                        except mdb.IntegrityError, ierr:
+                            # cache IntegrityError and allow the update to continue
+                            logger.exception('Project DB integrity error: ' + qry2 % d )
 
                 ## commit the transaction if everything is fine
                 cnx.commit()
