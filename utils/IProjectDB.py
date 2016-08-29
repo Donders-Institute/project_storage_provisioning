@@ -6,7 +6,6 @@ import pprint
 from utils.Common import getMyLogger
 from utils.acl.UserRole import PROJECT_ROLES
 
-
 class ProjectRoleSettingAction:
     '''object containing attribute for the project access control setup action'''
     def __init__(self, **kwargs):
@@ -332,21 +331,23 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
                 if data1:
                     for d in data1:
                         logger.debug(qry1 % d)
-                    crs.executemany(qry1, data1)
+                        crs.execute(qry1, d)
 
                 if data2:
                     for d in data2:
                         logger.debug(qry2 % d)
-                    crs.executemany(qry2, data2)
+                        crs.execute(qry2, d)
 
                 ## commit the transaction if everything is fine
                 cnx.commit()
 
             except Exception, e:
                 logger.exception('Project DB update failed')
+                print("Error: {}".format(e))
                 ## something wrong, rollback the queries
                 try:
                     cnx.rollback()
+                    raise e
                 except Exception, e:
                     logger.exception('Project DB rollback failed')
             else:
