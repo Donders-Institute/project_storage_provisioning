@@ -1,5 +1,6 @@
 #!/bin/env python
 import sys
+import traceback 
 import os
 from argparse import ArgumentParser
 
@@ -8,6 +9,7 @@ from argparse import ArgumentParser
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/..')
 from utils.Common import getConfig, getMyLogger
+from utils.IMailer import SMTPMailer
 from utils.IProjectDB import getDBConnectInfo,updateProjectDatabase
 from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
 
@@ -55,4 +57,29 @@ if __name__ == "__main__":
 
     # updating database
     (db_host, db_uid, db_name, db_pass) = getDBConnectInfo(cfg)
-    updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)
+
+    try:
+        updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=args.verbose)
+    except Exception, e:
+
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+
+        smtp_host = cfg.get('MAILER','SMTP_HOST')
+        smtp_port = cfg.get('MAILER','SMTP_PORT')
+        smtp_user = cfg.get('MAILER','SMTP_USERNAME')
+        smtp_pass = cfg.get('MAILER','SMTP_PASSWORD')
+
+        smtp_credential = None
+        if smtp_user and smtp_pass:
+            smtp_credential = {'username': smtp_user, 'password': smtp_pass}
+
+        mailer = SMTPMailer(host=smtp_host, port=smtp_port, credential=smtp_credential, lvl=args.verbose)
+
+        subject = 'Fail updating project storage ACL to project database'
+        toAddress = cfg.get('MAILER','EMAIL_ADMIN_ADDRESSES')
+
+        # content of the email
+        _parts = {'plain': 'System error:\n\n' + ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}
+
+        # send email
+        mailer.sendMultipartEmail(subject=subject, fromAddress=cfg.get('MAILER','EMAIL_FROM_ADDRESS'), toAddress=toAddress, parts=_parts)

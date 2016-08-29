@@ -347,9 +347,9 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
                 ## something wrong, rollback the queries
                 try:
                     cnx.rollback()
-                    raise e
-                except Exception, e:
+                except Exception, e_ignore:
                     logger.exception('Project DB rollback failed')
+                raise e
             else:
                 ## everything is fine
                 logger.info('Project DB update succeeded')
