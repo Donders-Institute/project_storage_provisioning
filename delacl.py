@@ -39,6 +39,12 @@ if __name__ == "__main__":
                       default = 0,
                       help    = 'set the verbosity level, 0:WARNING, 1:ERROR, 2:INFO, 3:DEBUG (default: %(default)s)')
 
+    parg.add_argument('-r','--recursive',
+                      action  = 'store_true',
+                      dest    = 'recursive',
+                      default = False,
+                      help    = 'revoke user\'s role recursively from a given path downward. The given path is constructed based on the project number and/or the -p argument. \t!!Note that after a successful execution, the role settings on all sub-directories will be set identical to the one on the given path!!')
+
     parg.add_argument('-f','--force',
                       action  = 'store_true',
                       dest    = 'force',
@@ -102,7 +108,7 @@ if __name__ == "__main__":
             p = os.path.join(fs.project_root, re.sub(r'^%s/' % fs.project_root, '', args.subdir))
 
         if os.path.exists(p):
-            out = fs.delUsers(re.sub(r'^%s/' % fs.project_root, '', args.subdir), _l_user, force=args.force, logical=args.logical, batch=args.batch)
+            out = fs.delUsers(re.sub(r'^%s/' % fs.project_root, '', args.subdir), _l_user, recursive=args.recursive, force=args.force, logical=args.logical, batch=args.batch)
             if not out:
                 logger.error('fail to remove %s from project %s.' % (','.join(_l_user), id))
             elif args.batch:

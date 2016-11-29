@@ -52,6 +52,12 @@ if __name__ == "__main__":
                       default = '',
                       help    = 'set list of system uids separated by "," for the admin role')
 
+    parg.add_argument('-r','--recursive',
+                      action  = 'store_true',
+                      dest    = 'recursive',
+                      default = False,
+                      help    = 'set the role recursively from a given path downward. The given path is constructed based on the project number and/or the -p argument. \t!!Note that after a successful execution, the role settings on all sub-directories will be set identical to the one on the given path!!')
+
     parg.add_argument('-f','--force',
                       action  = 'store_true',
                       dest    = 'force',
@@ -148,7 +154,7 @@ if __name__ == "__main__":
             logger.info('setting file or directory: %s' % p)
 
             out = fs.setRoles(re.sub(r'^%s/' % fs.project_root, '', args.subdir), users=_l_user, contributors=_l_contrib,
-                              admins=_l_admin, force=args.force, traverse=args.traverse, logical=args.logical, batch=args.batch)
+                              admins=_l_admin, recursive=args.recursive, force=args.force, traverse=args.traverse, logical=args.logical, batch=args.batch)
 
             if args.batch and out:
                 print('batch job for setting ACL submitted: %s' % out)

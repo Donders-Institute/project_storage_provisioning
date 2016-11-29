@@ -77,7 +77,7 @@ class Nfs4ProjectACL(ProjectACL):
     def mapRoleToACE(self, role):
         pass
 
-    def setRoles(self, path='', users=[], contributors=[], admins=[], recursive=True, force=False, traverse=False,
+    def setRoles(self, path='', users=[], contributors=[], admins=[], recursive=False, force=False, traverse=False,
                  logical=False, batch=False):
 
         path = os.path.join(self.project_root, path)
@@ -150,7 +150,7 @@ class Nfs4ProjectACL(ProjectACL):
         else:
             return self.__nfs4_setfacl__(path, n_aces, _opts)
 
-    def delUsers(self, path='', users=[], recursive=True, force=False, logical=False, batch=False):
+    def delUsers(self, path='', users=[], recursive=False, force=False, logical=False, batch=False):
 
         path = os.path.join(self.project_root, path)
 
