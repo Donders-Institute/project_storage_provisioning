@@ -19,4 +19,4 @@ module load python/2.7.8
 myexec=$(echo $me | sed 's/prj_//').py
 
 ## run the executable passing command-line arguments
-$myexec $@
+$myexec "$@"
