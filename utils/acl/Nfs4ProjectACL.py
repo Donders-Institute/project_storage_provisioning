@@ -361,7 +361,7 @@ class Nfs4ProjectACL(ProjectACL):
         else:
             setacl_cmd = 'nfs4_setfacl '
 
-        setacl_cmd += '"%s" %s' % (', '.join(map(lambda x: x.__str__(), aces)), path)
+        setacl_cmd += '"%s" %s' % (','.join(map(lambda x: x.__str__(), aces)), path)
 
         # workaround for NetApp for the path is actually the root of the volume
         if os.path.isdir(path) and path[-1] is not '/':
@@ -455,7 +455,7 @@ rm -f $setacl_lock
                      'aces': aces}, f)
         f.close()
 
-        cmd += '"%s" %s' % (', '.join(map(lambda x: x.__str__(), aces)), path)
+        cmd += '"%s" %s' % (','.join(map(lambda x: x.__str__(), aces)), path)
 
         s = Shell()
         rc, outfile, m = s.cmd(cmd, timeout=None, mention_outputfile_on_errors=True)
