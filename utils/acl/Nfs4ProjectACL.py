@@ -448,7 +448,12 @@ rm -f $setacl_lock
             return False
 
         # serialize client information in to the .setacl_lock file
-        f = open(lock_fpath, 'wb')
+        try:
+            f = open(lock_fpath, 'wb')
+        except IOError as e:
+            self.logger.error('cannot create lock file %s: %s' % (lock_fpath, repr(e)))
+            return False
+
         pickle.dump({'time': datetime.datetime.now(),
                      'ip': socket.gethostbyname(socket.gethostname()),
                      'uid': os.getlogin(),
