@@ -6,6 +6,7 @@ import datetime
 import socket
 import re
 import inspect
+import grp 
 from tempfile import NamedTemporaryFile
 from utils.acl.RoleData import RoleData
 from utils.acl.ACE import ACE
@@ -64,7 +65,18 @@ class Nfs4ProjectACL(ProjectACL):
                 u = ace.principle.split('@')[0]
                 if u not in self.default_principles and ace.type in ['A']:
                     r = self.mapACEtoRole(ace)
-                    if self.__userExist__(u):
+
+                    # check validity of the given user or group
+                    v = False
+                    if ace.flag.lower().find('g') != -1:
+                       v = self.__groupExist__(u)
+                       if v:
+                           # indicate the given user is a group 
+                           u = 'g:%s' % u
+                    else:
+                       v = self.__userExist__(u)
+
+                    if v:
                         rdata.addUserToRole(r, u)
                         self.logger.debug('user %s: permission %s, role %s' % (u, ace.mask, r))
                     else:
@@ -317,6 +329,22 @@ class Nfs4ProjectACL(ProjectACL):
             pass
         return ick
 
+    def __groupExist__(self, group):
+        """
+        checks if given group name exists as a valid system group
+
+        :param group: the system group name 
+        :return: True if the group is valid, otherwise False
+        """
+
+        ick = False
+        try:
+            grp.getgrnam(group)
+            ick = True
+        except KeyError, e:
+            pass
+        return ick
+
     def __curateACE__(self, aces):
         """
         curate given ACEs with the following things:
@@ -334,6 +362,8 @@ class Nfs4ProjectACL(ProjectACL):
                 ace.flag = 'fd%s' % ace.flag.replace('f', '').replace('d', '')
                 n_aces.append(ace)
             elif self.__userExist__(u):
+                n_aces.append(ace)
+            elif ace.flag.lower().find('g') != -1 and self.__groupExist__(u):
                 n_aces.append(ace)
             else:
                 self.logger.warning('ignore ACE for invalid user: %s' % u)
