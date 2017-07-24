@@ -118,6 +118,11 @@ class Nfs4ProjectACL(ProjectACL):
 
                 if u not in self.default_principles and ace.type in ['A']:
                     r = self.mapACEtoRole(ace)
+
+                    # indicate group principle, except the the default GROUP@ identity 
+                    if ace.flag.lower().find('g') != -1:
+                        u = 'g:%s' % u
+
                     if u in ulist[r]:
                         self.logger.warning("skip redundant role setting: %s -> %s" % (u,r))
                         ulist[r].remove(u)
@@ -137,17 +142,31 @@ class Nfs4ProjectACL(ProjectACL):
 
         # compose new ACL based on the existing ACL
         n_aces = []
+        n_aces_grp = []
         for ace in o_aces:
             u = ace.principle.split('@')[0]
-            if u not in _ulist_a:
-                n_aces.append(ace)
+
+            # indicate group principle, except the the default GROUP@ identity
+            if ace.flag.lower().find('g') != -1 and u not in self.default_principles:
+                u = 'g:%s' % u
+                if u not in _ulist_a:
+                    n_aces_grp.append(ace)
+            else:
+                if u not in _ulist_a:
+                    n_aces.append(ace)
 
         # prepending ACEs related to the given user list
         for k, v in ulist.iteritems():
             self.logger.info('setting %s permission ...' % k)
             _perm = self.__get_permission__(k)
             for u in v:
-                n_aces.insert(0, ACE(type='A', flag='fd', principle='%s@dccn.nl' % u, mask='%s' % _perm['A']))
+                if u.find('g:') == 0: 
+                    n_aces_grp.insert(0, ACE(type='A', flag='fdg', principle='%s@dccn.nl' % re.sub(r'^g:', '', u), mask='%s' % _perm['A']))
+                else:
+                    n_aces.insert(0, ACE(type='A', flag='fd', principle='%s@dccn.nl' % u, mask='%s' % _perm['A']))
+
+        # merge user and group ACEs (Group ACEs are on top of user ACEs)
+        n_aces = n_aces_grp + n_aces
 
         # command-line options for nfs4_setfacl
         _opts = ['-s']
@@ -173,7 +192,7 @@ class Nfs4ProjectACL(ProjectACL):
             # check users in existing ACL to avoid redundant operations
             _u_exist = []
             for ace in o_aces:
-                u = ace.principle.split('@')[0]
+                u = 'g:%s' % ace.principle.split('@')[0] if ace.flag.lower().find('g') >= 0 else ace.principle.split('@')[0]
                 if u not in _u_exist + self.default_principles:
                     _u_exist.append(u)
 
@@ -193,7 +212,7 @@ class Nfs4ProjectACL(ProjectACL):
         # compose new ACL regarding the removal
         n_aces = []
         for ace in o_aces:
-            u = ace.principle.split('@')[0]
+            u = 'g:%s' % ace.principle.split('@')[0] if ace.flag.lower().find('g') >= 0 else ace.principle.split('@')[0]
             if u not in users:
                 n_aces.append(ace)
             else:
@@ -243,10 +262,13 @@ class Nfs4ProjectACL(ProjectACL):
             # consider users that needs to be added to the ACL for traverse role
             # we assume the user has already the traverse permission if it is already in ACL
             for u in users:
-                if u not in map(lambda x: x.principle.split('@')[0], o_aces):
+                if u not in map(lambda x: 'g:%s' % x.principle.split('@')[0] if x.flag.lower().find('g') >= 0 else x.principle.split('@')[0], o_aces):
                     self.logger.debug("adding user to traverse role: %s" % u)
                     _perm = self.__get_permission__(ROLE_TRAVERSE)
-                    n_aces.insert(0, ACE(type='A', flag='fd', principle='%s@dccn.nl' % u, mask=_perm['A']))
+                    if u.find('g:') == 0:
+                        n_aces.insert(0, ACE(type='A', flag='fdg', principle='%s@dccn.nl' % re.sub(r'^g:', '', u), mask=_perm['A']))
+                    else:
+                        n_aces.insert(0, ACE(type='A', flag='fd', principle='%s@dccn.nl' % u, mask=_perm['A']))
 
             # apply n_aces
             _opts = ['-s']
