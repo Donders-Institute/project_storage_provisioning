@@ -68,11 +68,10 @@ class Nfs4ProjectACL(ProjectACL):
 
                     # check validity of the given user or group
                     v = False
-                    if ace.flag.lower().find('g') != -1:
+                    if ace.flag.lower().find('g') >= 0:
+                       # indicate the given user is a group 
+                       u = 'g:%s' % u
                        v = self.__groupExist__(u)
-                       if v:
-                           # indicate the given user is a group 
-                           u = 'g:%s' % u
                     else:
                        v = self.__userExist__(u)
 
@@ -120,7 +119,7 @@ class Nfs4ProjectACL(ProjectACL):
                     r = self.mapACEtoRole(ace)
 
                     # indicate group principle, except the the default GROUP@ identity 
-                    if ace.flag.lower().find('g') != -1:
+                    if ace.flag.lower().find('g') >= 0:
                         u = 'g:%s' % u
 
                     if u in ulist[r]:
@@ -147,7 +146,7 @@ class Nfs4ProjectACL(ProjectACL):
             u = ace.principle.split('@')[0]
 
             # indicate group principle, except the the default GROUP@ identity
-            if ace.flag.lower().find('g') != -1 and u not in self.default_principles:
+            if ace.flag.lower().find('g') >= 0 and u not in self.default_principles:
                 u = 'g:%s' % u
                 if u not in _ulist_a:
                     n_aces_grp.append(ace)
@@ -385,7 +384,7 @@ class Nfs4ProjectACL(ProjectACL):
                 n_aces.append(ace)
             elif self.__userExist__(u):
                 n_aces.append(ace)
-            elif ace.flag.lower().find('g') != -1 and self.__groupExist__(u):
+            elif ace.flag.lower().find('g') >= 0 and self.__groupExist__(u):
                 n_aces.append(ace)
             else:
                 self.logger.warning('ignore ACE for invalid user: %s' % u)
