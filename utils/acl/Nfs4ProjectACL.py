@@ -70,8 +70,8 @@ class Nfs4ProjectACL(ProjectACL):
                     v = False
                     if ace.flag.lower().find('g') >= 0:
                        # indicate the given user is a group 
-                       u = 'g:%s' % u
                        v = self.__groupExist__(u)
+                       u = 'g:%s' % u
                     else:
                        v = self.__userExist__(u)
 
