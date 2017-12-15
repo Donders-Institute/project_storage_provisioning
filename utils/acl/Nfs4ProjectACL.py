@@ -325,7 +325,7 @@ class Nfs4ProjectACL(ProjectACL):
         if os.path.isdir(path) and path[-1] is not '/':
             path += '/'
 
-        cmd = 'nfs4_getfacl %s' % path
+        cmd = 'nfs4_getfacl "%s"' % path
         s = Shell()
         rc, output, m = s.cmd1(cmd, allowed_exit=[0, 255], timeout=None)
         if rc != 0:
@@ -412,7 +412,7 @@ class Nfs4ProjectACL(ProjectACL):
         else:
             setacl_cmd = 'nfs4_setfacl '
 
-        setacl_cmd += '"%s" %s' % (','.join(map(lambda x: x.__str__(), aces)), path)
+        setacl_cmd += '"%s" "%s"' % (','.join(map(lambda x: x.__str__(), aces)), path)
 
         # workaround for NetApp for the path is actually the root of the volume
         if os.path.isdir(path) and path[-1] is not '/':
