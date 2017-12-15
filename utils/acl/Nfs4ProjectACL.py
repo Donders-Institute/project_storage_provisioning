@@ -511,7 +511,7 @@ rm -f $setacl_lock
                      'aces': aces}, f)
         f.close()
 
-        cmd += '"%s" %s' % (','.join(map(lambda x: x.__str__(), aces)), path)
+        cmd += '"%s" "%s"' % (','.join(map(lambda x: x.__str__(), aces)), path)
 
         s = Shell()
         rc, outfile, m = s.cmd(cmd, timeout=None, mention_outputfile_on_errors=True)
