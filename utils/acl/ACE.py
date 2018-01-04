@@ -12,5 +12,8 @@ class ACE:
     def __str__(self):
         return ':'.join([self.type, self.flag, self.principle, self.mask])
 
+    def __str_no_inherit__(self):
+        return ':'.join([self.type, self.flag.replace('f','').replace('d',''), self.principle, self.mask])
+
     def __repr__(self):
         return repr(self.__dict__)
