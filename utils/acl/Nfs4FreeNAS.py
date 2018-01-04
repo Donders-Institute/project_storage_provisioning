@@ -14,7 +14,7 @@ from utils.acl.ProjectACL import ProjectACL
 from utils.Shell import Shell
 from utils.acl.UserRole import ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_TRAVERSE, ROLE_USER
 
-class Nfs4NetApp(ProjectACL):
+class Nfs4FreeNAS(ProjectACL):
 
     def __init__(self, project_root, lvl=0):
         ProjectACL.__init__(self, project_root, lvl)
@@ -160,9 +160,11 @@ class Nfs4NetApp(ProjectACL):
             _perm = self.__get_permission__(k)
             for u in v:
                 if u.find('g:') == 0: 
-                    n_aces_grp.insert(0, ACE(type='A', flag='fdg', principle='%s@dccn.nl' % re.sub(r'^g:', '', u), mask='%s' % _perm['A']))
+                    n_aces_grp.insert(0, ACE(type='A', flag='dg', principle='%s@dccn.nl' % re.sub(r'^g:', '', u), mask='%s' % _perm['A']))
+                    n_aces_grp.insert(0, ACE(type='A', flag='fg', principle='%s@dccn.nl' % re.sub(r'^g:', '', u), mask='%s' % _perm['A'].replace('x','')))
                 else:
-                    n_aces.insert(0, ACE(type='A', flag='fd', principle='%s@dccn.nl' % u, mask='%s' % _perm['A']))
+                    n_aces.insert(0, ACE(type='A', flag='d', principle='%s@dccn.nl' % u, mask='%s' % _perm['A']))
+                    n_aces.insert(0, ACE(type='A', flag='f', principle='%s@dccn.nl' % u, mask='%s' % _perm['A'].replace('x','')))
 
         # merge user and group ACEs (Group ACEs are on top of user ACEs)
         n_aces = n_aces_grp + n_aces
@@ -379,8 +381,7 @@ class Nfs4NetApp(ProjectACL):
         for ace in aces:
             u = ace.principle.split('@')[0]
             if u in self.default_principles:
-                # to make it general: remove 'f' and 'd' bits and re-prepend them again
-                ace.flag = 'fd%s' % ace.flag.replace('f', '').replace('d', '')
+                ace.flag = '%s' % ace.flag.replace('f', '').replace('d', '')
                 n_aces.append(ace)
             elif self.__userExist__(u):
                 n_aces.append(ace)
@@ -483,7 +484,12 @@ rm -f $setacl_lock
         for a in aces:
             self.logger.debug(a)
 
+        recursive = False
+
         if options:
+            if '-R' in options:
+                recursive = True
+                options.remove('-R')
             cmd = 'nfs4_setfacl %s ' % ' '.join(options)
         else:
             cmd = 'nfs4_setfacl '
@@ -511,24 +517,57 @@ rm -f $setacl_lock
                      'aces': aces}, f)
         f.close()
 
-        cmd += '"%s" "%s"' % (','.join(map(lambda x: x.__str__(), aces)), path)
-
         s = Shell()
-        rc, outfile, m = s.cmd(cmd, timeout=None, mention_outputfile_on_errors=True)
-        if rc != 0:
-            self.logger.error('%s failed' % cmd)
-        else:
-            os.unlink(outfile)
 
+        rc = 0
+        if recursive and os.path.isdir(path):
+            # remove inherit flag from aces
+            cmd_d = '%s "%s" ' % (cmd, ','.join(map(lambda x: x.__str__(), aces)))
+            cmd_f = '%s "%s" ' % (cmd, ','.join(map(lambda x: x.__str_no_inherit__(), aces)))
+
+            # execute multiple nfs4_setfacl command, iteratively
+            for (dirPath, dirNames, fileNames) in os.walk(path):
+                # on dir
+                _cmd = '%s "%s"' % (cmd_d, dirPath)
+                rc, outfile, m = s.cmd(_cmd, timeout=None, mention_outputfile_on_errors=True)
+                if rc != 0:
+                    self.logger.error('%s failed' % _cmd)
+                    break
+                else:
+                    os.unlink(outfile)
+
+                # on files
+                ick = True
+                for f in fileNames:
+                    _cmd = '%s "%s"' % (cmd_f, os.path.join(dirPath, f))
+                    rc, outfile, m = s.cmd(_cmd, timeout=None, mention_outputfile_on_errors=True)
+                    if rc != 0:
+                        self.logger.error('%s failed' % _cmd)
+                        ick = False
+                        break
+                    else:
+                        os.unlink(outfile)
+
+                # leave the main loop if something goes wrong
+                if not ick:
+                    break
+        else:
+            # execute single nfs4_setfacl command
+            if os.path.isdir(path):
+                cmd += '"%s" "%s"' % (','.join(map(lambda x: x.__str__(), aces)), path)
+            else:
+                cmd += '"%s" "%s"' % (','.join(map(lambda x: x.__str_no_inherit__(), aces)), path)
+
+            rc, outfile, m = s.cmd(cmd, timeout=None, mention_outputfile_on_errors=True)
+            if rc != 0:
+                self.logger.error('%s failed' % cmd)
+            else:
+                os.unlink(outfile)
+         
         # cleanup lock file regardless the result
         try:
             os.remove(lock_fpath)
-
-            # backup the lock file for debug purpose
-            #lock_fpath_bak = '%s.%s' % (lock_fpath, time.ctime())
-            #os.rename(lock_fpath, lock_fpath_bak)
         except:
             pass
 
         return not rc
-
