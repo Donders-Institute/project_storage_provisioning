@@ -265,9 +265,9 @@ class Nfs4NetApp(ProjectACL):
                     self.logger.debug("adding user to traverse role: %s" % u)
                     _perm = self.__get_permission__(ROLE_TRAVERSE)
                     if u.find('g:') == 0:
-                        n_aces.insert(0, ACE(type='A', flag='fdg', principle='%s@dccn.nl' % re.sub(r'^g:', '', u), mask=_perm['A']))
+                        n_aces.insert(0, ACE(type='A', flag='dg', principle='%s@dccn.nl' % re.sub(r'^g:', '', u), mask=_perm['A']))
                     else:
-                        n_aces.insert(0, ACE(type='A', flag='fd', principle='%s@dccn.nl' % u, mask=_perm['A']))
+                        n_aces.insert(0, ACE(type='A', flag='d', principle='%s@dccn.nl' % u, mask=_perm['A']))
 
             # apply n_aces
             _opts = ['-s']
