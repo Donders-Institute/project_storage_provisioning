@@ -8,8 +8,9 @@ import re
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils.Common import getConfig, getMyLogger, csvArgsToList
-from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
+from utils.Common import getConfig, getMyLogger, csvArgsToList, getNfsServer
+from utils.acl.Nfs4NetApp import Nfs4NetApp as nfs4_netapp
+from utils.acl.Nfs4FreeNAS import Nfs4FreeNAS as nfs4_freenas
 
 ## execute the main program
 if __name__ == "__main__":
@@ -97,10 +98,21 @@ if __name__ == "__main__":
     except ValueError, e:
         pass
 
-    fs = Nfs4ProjectACL('',lvl=args.verbose)
+    fss = {}
+    fss['atreides'] = nfs4_netapp('', lvl=args.verbose)
+    fss['freenas']  = nfs4_freenas('', lvl=args.verbose)
 
     for id in args.prj_id:
         p = os.path.join(args.basedir, id)
+
+        # switch between netapp and freenas
+        m = re.match('^(freenas|atreides).*', getNfsServer(p))
+        if m.group(1) not in fss.keys():
+            continue
+
+        fs = fss[m.group(1)]
+        logger.debug('use NFSv4 module: %s' % fs.__class__.__name__)
+
         fs.project_root = p
 
         if args.subdir:

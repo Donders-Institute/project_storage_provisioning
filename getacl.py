@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.Common import getConfig, getMyLogger
 from utils.acl.Report import printRoleTable
-from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
+from utils.acl.Nfs4NetApp import Nfs4NetApp as nfs4
 
 ## execute the main program
 if __name__ == "__main__":
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         args.prj_id = os.listdir(args.basedir)
 
     roles = {}
-    fs = Nfs4ProjectACL('', lvl=args.verbose)
+    fs = nfs4('', lvl=args.verbose)
     for id in args.prj_id:
         p = os.path.join(args.basedir, id)
 
