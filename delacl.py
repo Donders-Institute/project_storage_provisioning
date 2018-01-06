@@ -9,8 +9,8 @@ import re
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/external/lib/python')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.Common import getConfig, getMyLogger, csvArgsToList, getNfsServer
-from utils.acl.Nfs4NetApp import Nfs4NetApp as nfs4_netapp
-from utils.acl.Nfs4FreeNAS import Nfs4FreeNAS as nfs4_freenas
+from utils.acl.Nfs4NetApp import Nfs4NetApp
+from utils.acl.Nfs4FreeNAS import Nfs4FreeNAS
 
 ## execute the main program
 if __name__ == "__main__":
@@ -99,8 +99,8 @@ if __name__ == "__main__":
         pass
 
     fss = {}
-    fss['atreides'] = nfs4_netapp('', lvl=args.verbose)
-    fss['freenas']  = nfs4_freenas('', lvl=args.verbose)
+    fss['atreides'] = Nfs4NetApp('', lvl=args.verbose)
+    fss['freenas']  = Nfs4FreeNAS('', lvl=args.verbose)
 
     for id in args.prj_id:
         p = os.path.join(args.basedir, id)
