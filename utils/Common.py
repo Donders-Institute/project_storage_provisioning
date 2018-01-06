@@ -14,7 +14,7 @@ import socket
 import pwd
 
 from colorlog import ColoredFormatter
-
+from utils.Shell import Shell
 
 lc_formatter = ColoredFormatter(
         "%(log_color)s[%(levelname)-8s:%(name)s] %(message)s%(reset)s",
@@ -35,6 +35,18 @@ loggers = {}
 class HashableDict(dict):
     def __hash__(self):
         return hash(tuple(sorted(self.items())))
+
+def getNfsServer(path):
+    p = os.path.realpath(path)
+    if os.path.exists(p):
+        s = Shell()
+        # determin which fs module should be loaded
+        cmd = 'findmnt --target "%s" --output SOURCE -n' % p
+        rc, out, m = s.cmd1(cmd, timeout=None)
+        if rc == 0:
+            return out.split(':')[0]
+        else:
+            return ''
 
 def getConfig(config_file='config.ini'):
     ''' read and parse the config.ini file
