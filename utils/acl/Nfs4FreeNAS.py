@@ -521,9 +521,12 @@ rm -f $setacl_lock
 
         rc = 0
         if recursive and os.path.isdir(path):
-            # remove inherit flag from aces
+
+            # compose setacl command for directory ACEs
             cmd_d = '%s "%s" ' % (cmd, ','.join(map(lambda x: x.__str__(), aces)))
-            cmd_f = '%s "%s" ' % (cmd, ','.join(map(lambda x: x.__str_no_inherit__(), aces)))
+            # compose setacl command for file ACEs
+            # get ACEs with principle domain @dccn.nl; but without 'd' inherit flag
+            aces_f = filter( lambda x: not x.isDefaultPrinciple() and not x.isDirectoryInherited(), aces )
 
             # execute multiple nfs4_setfacl command, iteratively
             for (dirPath, dirNames, fileNames) in os.walk(path):
@@ -539,7 +542,10 @@ rm -f $setacl_lock
                 # on files
                 ick = True
                 for f in fileNames:
-                    _cmd = '%s "%s"' % (cmd_f, os.path.join(dirPath, f))
+                    fpath = os.path.join(dirPath, f)
+                    # combine the existing default ACEs (i.e. ACEs without pricinple domain)
+                    aces_d = filter( lambda x:x.isDefaultPrinciple(), self.__nfs4_getfacl__(fpath))
+                    _cmd = '%s "%s" "%s"' % (cmd, ','.join(map(lambda x: x.__str_no_inheritance__(), aces_f + aces_d)), fpath)
                     rc, outfile, m = s.cmd(_cmd, timeout=None, mention_outputfile_on_errors=True)
                     if rc != 0:
                         self.logger.error('%s failed' % _cmd)
