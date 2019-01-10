@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/..')
 from utils.Common import getConfig, getMyLogger
 from utils.IMailer import SMTPMailer
 from utils.IProjectDB import getDBConnectInfo,updateProjectDatabase
-from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
+from utils.acl.Nfs4NetApp import Nfs4NetApp
 
 # execute the main program
 if __name__ == "__main__":
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         args.pid = os.listdir(args.basedir)
 
     roles = {}
-    fs = Nfs4ProjectACL('', lvl=args.verbose)
+    fs = Nfs4NetApp('', lvl=args.verbose)
     for id in args.pid:
         fs.project_root = os.path.join(args.basedir, id)
         roles[id] = fs.getRoles(recursive=False)
