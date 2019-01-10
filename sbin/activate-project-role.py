@@ -11,7 +11,7 @@ from utils.Common import getConfig, getMyLogger
 from utils.IMailer import SMTPMailer
 from utils.IStorage import StorageType, createProjectDirectory
 from utils.IProjectDB import getDBConnectInfo, setProjectRoleConfigActions, getProjectRoleConfigActions, updateProjectDatabase, getProjectOwner
-from utils.acl.Nfs4ProjectACL import Nfs4ProjectACL
+from utils.acl.Nfs4NetApp import Nfs4NetApp
 from utils.acl.UserRole import ROLE_ADMIN, ROLE_CONTRIBUTOR, ROLE_USER
 
 # execute the main program
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     prjs = list( set(map(lambda x:x.pid, actions)) )
 
 
-    fs = Nfs4ProjectACL('', lvl=args.verbose)
+    fs = Nfs4NetApp('', lvl=args.verbose)
     for pid in prjs:
 
         p_actions = filter(lambda x:x.pid==pid, actions)
