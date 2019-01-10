@@ -118,7 +118,7 @@ def __makeProjectDirectoryNetApp__(fpath, quota, ouid, ogid, filer_admin, filer_
                 break
 
         if not ck_qos_exist:
-            cmd = 'qos policy-group create -policy-group %s -vserver atreides -max-throughput 3000' % qos_policy_group
+            cmd = 'qos policy-group create -policy-group %s -vserver atreides -max-throughput 6000iops' % qos_policy_group
             logger.debug('cmd creating qos policy group: %s' % cmd)
             rc,output,m = __exec_filer_cmd_ssh__(filer_admin, filer_mgmt_server, cmd, shell=s, lvl=lvl)
             if rc != 0:
