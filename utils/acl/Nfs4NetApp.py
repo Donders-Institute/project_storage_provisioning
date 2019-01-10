@@ -318,7 +318,10 @@ class Nfs4NetApp(ProjectACL):
             for ace in acl_str.split('\n'):
                 if ace:
                     d = ace.split(':')
-                    acl.append(ACE(type=d[0], flag=d[1], principle=d[2], mask=d[3]))
+                    if len(d) == 4:
+                        acl.append(ACE(type=d[0], flag=d[1], principle=d[2], mask=d[3]))
+                    else:
+                        self.logger.debug("invalid ACE: %s" % ace)
             return acl
 
         # workaround for NetApp for the path is actually the root of the volume
