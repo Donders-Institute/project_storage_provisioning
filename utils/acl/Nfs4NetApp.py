@@ -500,6 +500,19 @@ rm -f $setacl_lock
         if os.path.exists(lock_fpath):
             self.logger.error('cannot setacl as lock file \'%s\' has been acquired by other process' % lock_fpath)
             return False
+ 
+        # check project quota (1K block size)
+        qcmd = 'df -BK --output="avail" %s | grep -v "Avail"' % self.project_root
+        qs = Shell()
+        rc, output, m = qs.cmd1(qcmd, timeout=None)
+        if rc != 0:
+            self.logger.error('fail checking quota uage of %s, cmd: %s' % (self.project_root, qcmd))
+            return False
+
+        nbavail = int(output.strip().strip('K'))
+        if nbavail < 1:
+            self.logger.error('insufficient quota (%d 1k-block available) for %s' % (nbavail, self.project_root))
+            return False
 
         # serialize client information in to the .setacl_lock file
         try:
