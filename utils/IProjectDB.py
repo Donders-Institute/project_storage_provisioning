@@ -318,6 +318,7 @@ def updateProjectDatabase(roles, db_host, db_uid, db_pass, db_name, lvl=0):
                 data2 = []
 
                 for p, rd_list in roles.iteritems():
+                    data1.append((p,))
                     for rd in rd_list:
                         for k in PROJECT_ROLES:
                             for u in rd[k]:
